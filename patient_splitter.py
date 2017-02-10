@@ -60,7 +60,7 @@ def split_records(file_name):
     file.close()
 
     records = text.split("**PROTECTED[begin]")
-    return records[1:] # The first record is the empty string
+    return records[1:] # The first record is "DUMMY " Don't return that one
 
 # For testing
 def print_patient_IDs(patients):
