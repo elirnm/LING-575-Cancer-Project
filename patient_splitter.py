@@ -1,6 +1,8 @@
 import os
 import sys
 import re
+from collections import defaultdict
+from record import Record
 
 '''
 Patient Splitter Method
@@ -37,21 +39,17 @@ def get_patients(file_list):
         records = split_records(file_name)
 
         # check for records with matching patient IDs
-        file_records = {}
+        file_records = defaultdict(str)
         for record in records:
-            id = get_patient_id(record)
+            _id = get_patient_id(record)
+            file_records[_id] += record
 
-            if not id in file_records:
-                file_records[id] = record
-            # combine multiple records for the same patient
-            else:
-                file_records[id] = file_records[id] + record
-
-        for id in file_records.keys():
-            all_patients.append(file_records[id])
+        for _id in file_records.keys():
+            record = Record(_id, file_records[_id])
+            all_patients.append(record)
 
     # Array of all patient strings. May be multiple records for each patient
-    return all_patients
+    return sorted(all_patients, key=lambda r: int(r.pid[3:]))
 
 def split_records(file_name):
     file = open(file_name)
@@ -66,7 +64,7 @@ def split_records(file_name):
 def print_patient_IDs(patients):
 
     for patient in patients:
-        first_section = rx_tagged_section.search(patient)
+        first_section = rx_tagged_section.search(patient.record)
         if not first_section:
             sys.stderr.write("Couldn't find patient ID\n")
             print(patient)
@@ -74,9 +72,10 @@ def print_patient_IDs(patients):
             print(first_section.group(2).strip("\n"))
 
 
-files = get_file_list(sys.argv[1])
-# List of Patient strings. The method splits on the opening line,
-# so "**PROTECTED[begin]" is deleted. It'd be easy enough to add back in if necessary
-patients = get_patients(files)
+if __name__ == "__main__":
+    files = get_file_list(sys.argv[1])
+    # List of Patient strings. The method splits on the opening line,
+    # so "**PROTECTED[begin]" is deleted. It'd be easy enough to add back in if necessary
+    patients = get_patients(files)
 
-print_patient_IDs(patients)
+    print_patient_IDs(patients)
