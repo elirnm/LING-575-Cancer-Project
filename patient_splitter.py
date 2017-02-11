@@ -32,7 +32,7 @@ def get_patient_id(record):
     else:
         return first_section.group(2).strip("\n")
 
-def get_patients(file_list):
+def get_records(file_list):
     all_patients = []
 
     for file_name in file_list:
@@ -76,6 +76,6 @@ if __name__ == "__main__":
     files = get_file_list(sys.argv[1])
     # List of Patient strings. The method splits on the opening line,
     # so "**PROTECTED[begin]" is deleted. It'd be easy enough to add back in if necessary
-    patients = get_patients(files)
+    patients = get_records(files)
 
     print_patient_IDs(patients)
