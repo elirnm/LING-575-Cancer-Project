@@ -9,19 +9,14 @@ Patient Splitter Method
 Krista Watkins
 Feb 10
 
-Usage: python3 recordSplitter.py directory_name
+Usage: python3 recordSplitter.py dir_name output_file
 
 This doesn't promise a particular order for the patients. Is there any reason we'd care?
 '''
 rx_tagged_section = re.compile("<(\\w+)>(.+?)</\\1>", re.DOTALL)
 
-def get_file_list(directory):
-    dir_list = os.listdir(directory)
-    file_list = []
-    for item in dir_list:
-        if item.endswith(".txt"):
-            file_list.append(directory + "/" + item)
-    return file_list
+def get_file_list(dir):
+    return ["/".join((dir, f)) for f in os.listdir(dir) if f.endswith(".txt")]
 
 def get_patient_id(record):
     first_section = rx_tagged_section.search(record)
@@ -62,7 +57,6 @@ def split_records(file_name):
 
 # For testing
 def print_patient_IDs(patients):
-
     for patient in patients:
         first_section = rx_tagged_section.search(patient.record)
         if not first_section:
@@ -76,6 +70,7 @@ if __name__ == "__main__":
     files = get_file_list(sys.argv[1])
     # List of Patient strings. The method splits on the opening line,
     # so "**PROTECTED[begin]" is deleted. It'd be easy enough to add back in if necessary
-    patients = get_records(files)
-
-    print_patient_IDs(patients)
+    records = get_records(files)
+    with open(sys.argv[2], "w") as out_file:
+        for record in records:
+            record.dump(out_file)
