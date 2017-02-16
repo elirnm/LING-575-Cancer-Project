@@ -41,7 +41,7 @@ def get_records(file_list):
             file_records[_id] += record
 
         for _id in file_records.keys():
-            record = Record(_id, file_records[_id])
+            record = Record(_id, file_records[_id], file=file_name)
             all_patients.append(record)
 
     # Array of all patient strings. May be multiple records for each patient
