@@ -1,5 +1,6 @@
 import re
 from collections import Counter
+import sys
 
 '''
 Krista Watkins
@@ -18,7 +19,7 @@ To Implement:
 '''
 
 # Rexeges
-hist_line_rx = re.compile("histologic grade:(.+)", re.IGNORECASE)
+hist_title_rx = re.compile("histologic grade:", re.IGNORECASE)
 
 '''
 Groups
@@ -38,27 +39,46 @@ def classify_record(patient):
     gradeNumber = 0
     
     # There may be more than one record
-    histology_lines = hist_line_rx.finditer(patient)
-    
-    if histology_lines:
+    histology_headers = hist_title_rx.finditer(patient)
+
+
+    if not histology_headers == None:
         grades = []
-        for h_line in histology_lines:
+        start_indices = []
+        section_count = 0
+
+        for header_match in histology_headers:
+            start_indices.append(header_match.start())
+
+        section_count = len(start_indices)
+
+
+        for i in range(0,section_count):
+            stop_index = len(patient)
+            if i < section_count - 1:
+                stop_index = start_indices[i+1]
+            section = patient[start_indices[i]:stop_index]
+
             # Find numerical grade numbers immidiately to the right of "Histology Grade:"
-            number_found = number_grade_rx.search(h_line)
+            number_found = number_grade_rx.search(section)
             if number_found:
                 grades.append(extract_number(number_found))
 
             # Search for other indicators in the same line
             else:
-                print("add non-numerical histology line option")
+                x=1 #sys.stderr.write("add non-numerical histology line option\n")
 
-        if len(grades) > 0:
+        if len(grades) > 1:
             grade_stats = Counter(grades)
+            sys.stderr.write("more than one grade")
             # Where multiple grades differ, return the most common
             return grade_stats.most_common(1)[0][0]
 
+        elif len(grades) == 1:
+            return grades[0]
+
     else:
-        print("Add no-histology-line option")
+        sys.stderr.write("Add no-histology-line option")
 
 
     return gradeNumber
