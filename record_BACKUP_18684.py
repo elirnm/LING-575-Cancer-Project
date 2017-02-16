@@ -8,7 +8,14 @@ from collections import defaultdict
 
 
 class Record:
+<<<<<<< HEAD
+    def __init__(self, pid, record, file):
+        self.pid = pid
+        self.record = record
+        self.file = file
+=======
 
+    def __init__(self, pid, record):
         """
         Record- Stores patient record
 
@@ -17,11 +24,10 @@ class Record:
         :param pid: patient id number
         :param record: free text note
         """
-    def __init__(self, pid, record, file):
         self.pid = pid
         self.text = record
         self.sections = self.close_tags(record)
-        self.file = file
+>>>>>>> 0285c757ca59d5e33a48d08634c829b7707b51f9
 
     @staticmethod
     def close_tags(text):

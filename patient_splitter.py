@@ -74,11 +74,16 @@ def get_patients(dir):
     '''
     return get_records(get_file_list(dir))
 
+def load_records(dir):
+    return get_records(get_file_list(dir))
+
 if __name__ == "__main__":
     files = get_file_list(sys.argv[1])
     # List of Patient strings. The method splits on the opening line,
     # so "**PROTECTED[begin]" is deleted. It'd be easy enough to add back in if necessary
     records = get_records(files)
     with open(sys.argv[2], "w") as out_file:
+        print(records[0].record)
         for record in records:
+            parse = record.parse()
             record.dump(out_file)
