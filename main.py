@@ -16,6 +16,9 @@ patients = [Patient(record) for record in load_records(sys.argv[1])]
 print(patients[0].record.text)
 print(patients[0].record.sections)
 
+# call patient_splitter to get a list of patient records 
+patients = patient_splitter.get_patients() # should extract main functionality to function with return statement rather than printing
+
 """
 for patient in patients:
     # do whatever to classify the patient

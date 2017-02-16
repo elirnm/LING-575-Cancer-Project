@@ -16,6 +16,7 @@ This doesn't promise a particular order for the patients. Is there any reason we
 rx_tagged_section = re.compile("<(\\w+)>(.+?)</\\1>", re.DOTALL)
 
 def get_file_list(dir):
+    dir = dir.strip("/")
     return ["/".join((dir, f)) for f in os.listdir(dir) if f.endswith(".txt")]
 
 def get_patient_id(record):
@@ -65,6 +66,13 @@ def print_patient_IDs(patients):
         else:
             print(first_section.group(2).strip("\n"))
 
+def get_patients(dir):
+    '''
+    This is what to call from other programs.
+    Takes a string of a directory path.
+    Returns a list of record objects
+    '''
+    return get_records(get_file_list(dir))
 
 def load_records(dir):
     return get_records(get_file_list(dir))
