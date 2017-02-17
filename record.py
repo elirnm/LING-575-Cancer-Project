@@ -8,15 +8,14 @@ from collections import defaultdict
 
 
 class Record:
+    """
+    Record- Stores patient record
 
-        """
-        Record- Stores patient record
+    Still needs further development.
 
-        Still needs further development.
-
-        :param pid: patient id number
-        :param record: free text note
-        """
+    :param pid: patient id number
+    :param record: free text note
+    """
     def __init__(self, pid, record, file):
         self.pid = pid
         self.text = record
