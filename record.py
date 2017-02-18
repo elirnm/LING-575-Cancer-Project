@@ -16,11 +16,12 @@ class Record:
     :param pid: patient id number
     :param record: free text note
     """
-    def __init__(self, pid, record, file):
+    def __init__(self, pid, record, file, annotation):
         self.pid = pid
         self.text = record
         self.sections = self.close_tags(record)
         self.file = file
+        self.annotation = annotation
 
     @staticmethod
     def close_tags(text):

@@ -11,17 +11,16 @@ import sys
 from patient_splitter import load_records
 from patient import Patient
 
-# USAGE: python3 main.py test_dir
+# USAGE: python3 main.py train_dir test_dir
+
+train_dir = sys.argv[1]
+test_dir = sys.argv[2]
 
 # call patient_splitter to get a list of patient records
-patients = [Patient(record) for record in load_records(sys.argv[1])]
+patients = [Patient(record) for record in load_records(train_dir)]
 print(patients[0].record.text)
 print(patients[0].record.sections)
 
-test_dir = sys.argv[1]
-
-# call patient_splitter to get a list of patient records 
-patients = patient_splitter.get_patients()
 
 """
 for patient in patients:
