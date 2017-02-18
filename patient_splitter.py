@@ -17,14 +17,9 @@ This doesn't promise a particular order for the patients. Is there any reason we
 rx_tagged_section = re.compile("<(\\w+)>(.+?)</\\1>", re.DOTALL)
 
 def get_file_list(dir):
-    # this stuff throws an exception for some reason. It should get figured out
-    # dir = re.sub(r"\\|/", os.sep, dir)
-    # dir = dir.strip(os.sep)
-    # print([os.sep.join((dir, f)) for f in os.listdir(dir) if f.endswith(".txt")])
-    # return [os.sep.join((dir, f)) for f in os.listdir(dir) if f.endswith(".txt")]
-
-    dir = dir.strip("/")
-    return ["/".join((dir, f)) for f in os.listdir(dir) if f.endswith(".txt")]
+    dir = re.sub(r"\\|/", re.escape(os.sep), dir)
+    dir = dir.strip(os.sep)
+    return [os.sep.join((dir, f)) for f in os.listdir(dir) if f.endswith(".txt")]
 
 def get_patient_id(record):
     first_section = rx_tagged_section.search(record)
@@ -50,7 +45,7 @@ def get_records(file_list, test):
         # get the name of the annotations file corresponding to this record file
         file_version = "train" if not test else "test"
         file_id = "_".join(file_name.split(os.sep)[-1].split("_")[1:3])
-        annot_file_name = "/".join(file_name.split("/")[:-2] + ["Annotations"] + ["annotations_" + file_id + "_" + file_version + ".json"])
+        annot_file_name = os.sep.join(file_name.split(os.sep)[:-2] + ["Annotations"] + ["annotations_" + file_id + "_" + file_version + ".json"])
 
         for _id in file_records.keys():
             record = Record(_id, file_records[_id], file_name, get_annotation(_id, annot_file_name))
