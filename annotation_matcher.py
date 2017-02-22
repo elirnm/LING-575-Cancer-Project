@@ -4,22 +4,20 @@ import json
 # a whole file? a patient? etc
 
 def parse_json(file):
-	pids = {} # maps patient id -> their annotations
+	rids = {} # maps record id -> their annotations
 	annots = json.load(open(file))
 	for record in annots:
-		pid = annots[record]["PatientId"]
-		pids[pid] = annots[record]["Annotations"]
-		# need to decide here how to deal with patients who have mulitiple records
-	return pids
+		rids[record] = annots[record]["Annotations"]
+	return rids
 
-def get_annotation(pid, file):
+def get_annotation(rid, file):
 	''' Returns the full annotations section for a patient.
-	Takes a patient id and the file where the record is located.
+	Takes a record id and the file where the record is located.
 	File should be the path as a string, NOT a file object.
 	Returns the annotations section of the json object, as a group of nested dictionaries.
 	'''
-	pids = parse_json(file)
-	return pids[pid]
+	rids = parse_json(file)
+	return rids[rid]
 
 def search_annotation(annot, search):
 	''' Returns the entry for one category in a patient's annotation.
