@@ -1,7 +1,6 @@
 581 records processed
+353 records should be classified
 77 records classified
-353 records should be classified nonzero
-353 records classified nonzero
 64 records correctly classified
 Accuracy on records classified = 0.8311688311688312
 Accuracy on records that should be classified = 0.1813031161473088
