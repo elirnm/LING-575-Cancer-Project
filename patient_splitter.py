@@ -33,7 +33,7 @@ def get_record_id(record):
     if patient_id_match:
         id = patient_id_match.group(2).strip("\n")
         if id != "":
-            return(id)
+            return id
 
     sys.stderr.write("No Id Found for record: " + record[0:160]  + "\n")
 
