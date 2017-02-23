@@ -28,6 +28,6 @@ if __name__ == "__main__":
     import sys
     text = [("presidents senators vote bill law", "1"), ("keyboard RAM memory CPU", "0")]
     count_vect, model = train(text)
-    unktext = ["presidents and senators are cool", "I need more memory in my keyboard"]
+    unktext = ["presidents and senators are people", "I need more memory in my keyboard"]
     ans = test(model, count_vect, unktext)
     print(ans)
