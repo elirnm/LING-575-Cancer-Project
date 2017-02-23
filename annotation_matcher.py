@@ -19,13 +19,13 @@ def get_annotation(rid, file):
 def search_annotation(annot, search):
 	''' Returns the entry for one category in a patient's annotation.
 	Takes the dictionary representation of the annotation and a search term.
-	Returns a list of strings, where each entry is the result from one record in annot (e.g. 1, 2, 3)
-	Returns an empty list if the search term is not found anywhere.
+	Returns a string, where each  record in annot (e.g. 1, 2, 3) is separated by ';'
+	Returns an empty string if the search term is not found anywhere.
 	'''
-	answers = []
+	answers = ""
 	for record in annot:
 		try:
-			answers.append(annot[record][search])
+			answers += annot[record][search] + ";"
 		except KeyError:
 			pass
 	return answers
@@ -36,3 +36,4 @@ if __name__ == "__main__":
 	from pprint import pprint
 	a = get_annotation(sys.argv[1], sys.argv[2])
 	pprint(a)
+
