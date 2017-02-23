@@ -58,11 +58,11 @@ for record in records:
     if report_errors:
         rec_file = record.file.split(os.sep)[-1]
         if str(grade) not in gold and gold != "" and grade != 0:
-            incorrect.append((rec_file + os.sep + record.rid, str(grade), gold))
+            incorrect.append((rec_file + "/" + record.rid, str(grade), gold))
         if grade == 0 and gold != "":
-            wrong_should_have_class.append(rec_file + os.sep + record.rid)
+            wrong_should_have_class.append(rec_file + "/" + record.rid)
         if gold == "" and grade != 0:
-            wrong_should_have_no_class.append(rec_file + os.sep + record.rid)
+            wrong_should_have_no_class.append(rec_file + "/" + record.rid)
 
     # output classification to whatever format we're going to use
 
