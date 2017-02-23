@@ -33,7 +33,6 @@ records = patient_splitter.load_records(train_dir)
 # print(annotation_matcher.search_annotation(records[1].annotation, "Grade Category"))
 
 seen = 0
-should_have_class = 0
 classified = 0
 correct = 0
 if report_errors:
@@ -48,8 +47,6 @@ for record in records:
     gold = annotation_matcher.search_annotation(record.annotation, "Grade Category")
     grade = rule_based_classifier.classify_record(record.text)
     seen += 1
-    if gold != "":
-        should_have_class += 1
     if grade != 0:
         classified += 1
     if str(grade) in gold:
@@ -77,8 +74,6 @@ print("Accuracy on records that should be classified = " + str(correct / should_
 if report_errors:
     ea.write(str(seen) + " records processed\n")
     ea.write(str(classified) + " records classified\n")
-    ea.write(str(should_have_class) + " records should be classified nonzero\n")
-    ea.write(str(should_have_class) + " records classified nonzero\n")
     ea.write(str(correct) + " records correctly classified\n")
     ea.write("Accuracy on records classified = " + str(correct / classified) + "\n")
     ea.write("Accuracy on records that should be classified = " + str(correct / should_have_class) + "\n\n")
