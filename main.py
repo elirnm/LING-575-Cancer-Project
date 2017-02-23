@@ -3,7 +3,7 @@ Breast and Lung Cancer Grading Pipeline
 
 @authors: Eli Miller, Will Kearns
 
-Contains the top-level code for classifying a patient's histological grade.
+Contains the top-level code for classifying a records's histological grade.
 Makes calls to other more specific programs; manages and outputs what they return.
 See documentation for more information.
 '''
@@ -11,6 +11,7 @@ import sys
 import os
 import patient_splitter
 import rule_based_classifier
+import ml_classifier
 import annotation_matcher
 
 # USAGE: python3 main.py train_dir test_dir report_errors
@@ -27,25 +28,18 @@ if report_errors:
 
 # call patient_splitter to get a list of patient records
 records = patient_splitter.load_records(train_dir)
-# print(records[0].text)
-# print(len(records))
-# print(records[0].sections.keys())
-# print(annotation_matcher.search_annotation(records[1].annotation, "Grade Category"))
 
+# classify each record
 seen = 0
 should_have_class = 0
 classified = 0
 correct = 0
-# add variable for doing error analysis here
+# add variables for doing error analysis here
 if report_errors:
     wrong_should_have_no_class = []
     wrong_should_have_class = []
     incorrect = []
 for record in records:
-    # do whatever to classify the patient
-    # python programs should preferably have a callable function which returns the data we need
-    # non-python programs should print output to standard out and can be called from the command line with subprocess.check_output(["param1", "param2"], universal_newlines=True)
-    # e.g. subprocess.check_output(["java", "MyProgram", "needed_directory"], universal_newlines=True)
     gold = annotation_matcher.search_annotation(record.annotation, "Grade Category")
     grade = rule_based_classifier.classify_record(record.text)
     seen += 1
@@ -65,8 +59,6 @@ for record in records:
             wrong_should_have_class.append(rec_file + "/" + record.rid)
         if gold == "" and grade != 0:
             wrong_should_have_no_class.append(rec_file + "/" + record.rid)
-
-    # output classification to whatever format we're going to use
 
 # output accuracy data
 print(str(seen) + " records processed")
@@ -90,7 +82,7 @@ if report_errors:
 
     ea.write("Records that were given the wrong class (" + str(len(incorrect)) + "):\n")
     ea.write("Format: record id, given label, gold label\n")
-    ea.write("\n".join(map(lambda x: x[0] + " " + str(x[1]) + " " + str(x[2]), incorrect)) + "\n\n")
+    ea.write("\n".join(map(lambda x: x[0] + ", " + str(x[1]) + ", " + str(x[2]), incorrect)) + "\n\n")
 
     ea.write("Records that should be classified but were not given a class (" + str(len(wrong_should_have_class)) + "):\n")
     ea.write("\n".join(wrong_should_have_class) + "\n")
