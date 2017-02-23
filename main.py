@@ -36,6 +36,7 @@ seen = 0
 should_have_class = 0
 classified = 0
 correct = 0
+# add variable for doing error analysis here
 if report_errors:
     wrong_should_have_no_class = []
     wrong_should_have_class = []
@@ -55,6 +56,7 @@ for record in records:
     if str(grade) in gold:
         correct += 1
 
+    # update variables for doing error analysis here
     if report_errors:
         rec_file = record.file.split(os.sep)[-1]
         if str(grade) not in gold and gold != "" and grade != 0:
@@ -74,6 +76,7 @@ print(str(correct) + " records correctly classified")
 print("Accuracy on records classified = " + str(correct / classified))
 print("Accuracy on records that should be classified = " + str(correct / should_have_class))
 
+# print information for doing error analysis here
 if report_errors:
     ea.write(str(seen) + " records processed\n")
     ea.write(str(should_have_class) + " records should be classified\n")
