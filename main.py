@@ -17,18 +17,17 @@ train_dir = sys.argv[1]
 test_dir = sys.argv[2]
 
 # call patient_splitter to get a list of patient records
-patients = [Patient(record) for record in load_records(train_dir)]
-print(patients[0].record.text)
-print(patients[0].record.sections)
+records = load_records(train_dir)
+# print(records[0].text)
+# print(len(records))
+# print(records[0].sections.keys())
 
 
-"""
-for patient in patients:
+for record in records:
     # do whatever to classify the patient
     # python programs should preferably have a callable function which returns the data we need
     # non-python programs should print output to standard out and can be called from the command line with subprocess.check_output(["param1", "param2"], universal_newlines=True)
     # e.g. subprocess.check_output(["java", "MyProgram", "needed_directory"], universal_newlines=True)    
 
     # output classification to whatever format we're going to use
-    print(patient.record.text)
-"""
+    print(record.text)

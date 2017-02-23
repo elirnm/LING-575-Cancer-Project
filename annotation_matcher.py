@@ -1,8 +1,5 @@
 import json
 
-# we need to decide what we what to get the annotations for in each call
-# a whole file? a patient? etc
-
 def parse_json(file):
 	rids = {} # maps record id -> their annotations
 	annots = json.load(open(file))
@@ -17,7 +14,7 @@ def get_annotation(rid, file):
 	Returns the annotations section of the json object, as a group of nested dictionaries.
 	'''
 	rids = parse_json(file)
-	return rids[rid]
+	return rids[rid] if rid in rids else None
 
 def search_annotation(annot, search):
 	''' Returns the entry for one category in a patient's annotation.
@@ -31,6 +28,7 @@ def search_annotation(annot, search):
 			answers.append(annot[record][search])
 		except KeyError:
 			pass
+	return answers
 
 if __name__ == "__main__":
 	# to test: python annotation_matcher.py patient_id filename
