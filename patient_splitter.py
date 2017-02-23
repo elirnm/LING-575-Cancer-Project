@@ -61,7 +61,7 @@ def get_records(file_list, test):
             all_patients.append(record)
 
     # Array of all patient strings. May be multiple records for each patient
-    return sorted(all_patients, key=lambda r: int(r.pid[3:]))
+    return sorted(all_patients, key=lambda r: int(r.rid[3:]))
 
 def split_records(file_name):
     file = open(file_name)
@@ -72,15 +72,12 @@ def split_records(file_name):
     records = text.split("**PROTECTED[begin]")
     return records[1:] # The first record is "DUMMY " Don't return that one
 
-def get_patients(dir):
+def load_records(dir, test=False):
     '''
     This is what to call from other programs.
     Takes a string of a directory path.
     Returns a list of record objects
     '''
-    return get_records(get_file_list(dir))
-
-def load_records(dir, test=False):
     return get_records(get_file_list(dir), test)
 
 if __name__ == "__main__":

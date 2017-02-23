@@ -15,12 +15,12 @@ class Record:
 
     Still needs further development.
 
-    :param pid: patient id number
+    :param rid: record id number
     :param record: free text note
     """
 
-    def __init__(self, pid, record, file, annotation):
-        self.pid = pid
+    def __init__(self, rid, record, file, annotation):
+        self.rid = rid
         self.text = record
         self.sections = self.close_tags(record)
         self.file = file
