@@ -6,11 +6,11 @@ Uses Python 3
 
 USAGE: 
 
-python3 main.py train_dir test_dir report_errors
+python main.py train_dir test_dir report_errors
 
 or
 
-python3 run.sh train_dir test_dir report_errors
+run.sh train_dir test_dir report_errors
 
 train_dir is the directory containing the training data files
 
