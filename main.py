@@ -29,6 +29,8 @@ if report_errors:
 # call patient_splitter to get a list of patient records
 records = patient_splitter.load_records(train_dir)
 
+# need to train the ML classifier here
+
 # classify each record
 seen = 0
 should_have_class = 0

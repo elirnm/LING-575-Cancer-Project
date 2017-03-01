@@ -1,19 +1,24 @@
-# Histologic Grading Project
-## Eli Miller, Will Kearns, Krista Watkins
-### LING 575C, Winter 2017
+Histologic Grade Classification
+-----
 
-Uses Python 3
+### Eli Miller, Will Kearns, Krista Watkins
+#### LING 575C: Natural Language Processing in Cancer Informatics, Winter 2017, University of Washington
 
-USAGE: 
+Usage
+-----
 
-python main.py train_dir test_dir report_errors
+Uses Python 3 
 
+```bash
+python(3) main.py train_dir test_dir error_file
+```
 or
+```bash
+run.sh train_dir test_dir error_file
+```
 
-run.sh train_dir test_dir report_errors
+train_dir is the directory containing the training data files.
 
-train_dir is the directory containing the training data files
+test_dir is the directory containing the test data files.
 
-test_dir is the directory containing the test data files
-
-report_errors is optional. If it is present, error data will be printed to a file with that name
+error_file is optional. If it is present, error data will be printed to a file with that name.
