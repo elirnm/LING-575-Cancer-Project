@@ -63,7 +63,7 @@ for record in records:
     if report_errors:
         rec_file = record.file.split(os.sep)[-1]
         if str(grade) not in gold and gold != "" and grade != 0:
-            incorrect.append((rec_file + "/" + record.rid, str(grade)))
+            incorrect.append((rec_file + "/" + record.rid, str(grade), gold))
         if grade == 0 and gold != "":
             wrong_should_have_class.append(rec_file + "/" + record.rid)
         if gold == "" and grade != 0:
@@ -90,8 +90,8 @@ if report_errors:
     ea.write("\n".join(wrong_should_have_no_class) + "\n\n")
 
     ea.write("Records that were given the wrong class (" + str(len(incorrect)) + "):\n")
-    ea.write("Format: record id, given label\n")
-    ea.write("\n".join(map(lambda x: x[0] + ", " + str(x[1]), incorrect)) + "\n\n")
+    ea.write("Format: record id, given label, gold label\n")
+    ea.write("\n".join(map(lambda x: x[0] + ", " + str(x[1]) + ", " + x[2], incorrect)) + "\n\n")
 
     ea.write("Records that should be classified but were not given a class (" + str(len(wrong_should_have_class)) + "):\n")
     ea.write("\n".join(wrong_should_have_class) + "\n")

@@ -5,3 +5,4 @@ __pycache__/
 .project
 .classpath
 *.test.*
+error_analysis.txt
