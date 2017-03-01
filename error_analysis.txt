@@ -11,17 +11,17 @@ reports_2_breast_train.txt/REC86
 reports_4_lung_train.txt/REC720
 
 Records that were given the wrong class (10):
-Format: record id, given label, gold label
-reports_1_breast_train.txt/PAT14 2 well differentiated (Grade 1);
-reports_2_breast_train.txt/REC15 1 poorly differentiated (Grade 3);
-reports_2_breast_train.txt/REC53 1 moderately differentiated (Grade 2);
-reports_2_breast_train.txt/REC74 1 moderately differentiated (Grade 2);
-reports_1_lung_train.txt/PAT125 1 undifferentiated/anaplastic (Grade 4);
-reports_1_lung_train.txt/PAT157 1 moderately differentiated (Grade 2);
-reports_2_lung_train.txt/REC164 1 undifferentiated/anaplastic (Grade 4);
-reports_1_lung_train.txt/PAT172 2 poorly differentiated (Grade 3);
-reports_1_lung_train.txt/PAT186 1 moderately differentiated (Grade 2);
-reports_4_breast_train.txt/REC598 1 moderately differentiated (Grade 2);
+Format: record id, given label
+reports_1_breast_train.txt/PAT14, 2
+reports_2_breast_train.txt/REC15, 1
+reports_2_breast_train.txt/REC53, 1
+reports_2_breast_train.txt/REC74, 1
+reports_1_lung_train.txt/PAT125, 1
+reports_1_lung_train.txt/PAT157, 1
+reports_2_lung_train.txt/REC164, 1
+reports_1_lung_train.txt/PAT172, 2
+reports_1_lung_train.txt/PAT186, 1
+reports_4_breast_train.txt/REC598, 1
 
 Records that should be classified but were not given a class (279):
 reports_2_breast_train.txt/REC2

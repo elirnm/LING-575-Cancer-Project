@@ -16,15 +16,17 @@ To do:
 
 def train(text):
     '''
-    Takes a list of (string, label) tuples.
+    Takes a list of (string, label) tuples. The labels must be parsable as numbers;
+        they cannot be words. Pre-convert any named labels before passing them to
+        this method. Each tuple is one training instance. The string is used to
+        create a bag of words feature vector.
     Returns a fitted vectorizer and a trained classifier.
-    Currently returns a multinominal naive bayes classifier
+    Currently creates a multinominal naive bayes classifier.
     '''
     count_vect = CountVectorizer()
     labels = [x[1] for x in text]
     lines = [x[0] for x in text]
     train_counts = count_vect.fit_transform(lines)
-    print(train_counts.shape)
     mnb = MultinomialNB().fit(train_counts, labels)
     return count_vect, mnb
 
@@ -32,7 +34,9 @@ def test(model, count_vect, text):
     '''
     Takes a trained classifier, a fitted vectorizer, and a list of strings to classify.
     Returns a list containing the classification of each string, in the same order as
-    the given list of strings.
+        the given list of strings. The classifications are in index form, and must be
+        converted back to strings after receiving the output of this method if you wish
+        to have named labels.
     '''
     counts = count_vect.transform(text)
     pred = model.predict(counts)

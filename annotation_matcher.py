@@ -20,6 +20,7 @@ def get_annotation(rid, file):
 	Takes a record id and the file where the record is located.
 	File should be the path as a string, NOT a file object.
 	Returns the annotations section of the json object, as a group of nested dictionaries.
+	Returns None if there is no annotation with the given record id.
 	'''
 	rids = parse_json(file)
 	return rids[rid] if rid in rids else None
@@ -27,7 +28,7 @@ def get_annotation(rid, file):
 def search_annotation(annot, search):
 	''' Returns the entry for one category in a record's annotation.
 	Takes the dictionary representation of the annotation and a search term.
-	Returns a string, where each  record in annot (e.g. 1, 2, 3) is separated by ';'
+	Returns a string, where each record in annot (e.g. 1, 2, 3) is separated by ';'
 	Returns an empty string if the search term is not found anywhere.
 	'''
 	answers = ""

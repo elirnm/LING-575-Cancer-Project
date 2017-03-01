@@ -1,12 +1,3 @@
-'''
-Breast and Lung Cancer Grading Pipeline
-
-@authors: Eli Miller, Will Kearns
-
-Contains the top-level code for classifying a records's histological grade.
-Makes calls to other more specific programs; manages and outputs what they return.
-See documentation for more information.
-'''
 import sys
 import os
 import patient_splitter
@@ -14,11 +5,22 @@ import rule_based_classifier
 import ml_classifier
 import annotation_matcher
 
-# USAGE: python3 main.py train_dir test_dir report_errors
-# train_dir is the directory containing the training data files
-# test_dir is the directory containing the test data files
-# report_errors is optional. If it is present, error data will
-#   be printed to a file with that name
+'''
+Breast and Lung Cancer Grading Pipeline
+
+@authors: Eli Miller, Will Kearns
+
+Contains the top-level code for classifying a records's histological grade.
+Makes calls to other more specific programs; manages and outputs what they return.
+
+
+USAGE: python(3) main.py train_dir test_dir error_file
+
+train_dir is the directory containing the training data files.
+test_dir is the directory containing the test data files.
+error_file is optional. If it is present, error data will
+    be printed to a file with that name.
+'''
 
 train_dir = sys.argv[1]
 test_dir = sys.argv[2]
@@ -32,11 +34,14 @@ records = patient_splitter.load_records(train_dir)
 # need to train the ML classifier here
 
 # classify each record
+# rb_* variables track results of rule-based classifier only
+# ml_* variables track results of machine learning classifier only
+# generic variables track results of system as a whole
 seen = 0
 should_have_class = 0
-classified = 0
-correct = 0
-# add variables for doing error analysis here
+classified, rb_classified, ml_classified = 0, 0, 0
+correct, rb_correct, ml_correct = 0, 0, 0
+# initialize variables for doing error analysis here
 if report_errors:
     wrong_should_have_no_class = []
     wrong_should_have_class = []
@@ -49,14 +54,16 @@ for record in records:
         should_have_class += 1
     if grade != 0:
         classified += 1
+        rb_classified += 1
     if str(grade) in gold:
         correct += 1
+        rb_correct += 1
 
     # update variables for doing error analysis here
     if report_errors:
         rec_file = record.file.split(os.sep)[-1]
         if str(grade) not in gold and gold != "" and grade != 0:
-            incorrect.append((rec_file + "/" + record.rid, str(grade), gold))
+            incorrect.append((rec_file + "/" + record.rid, str(grade)))
         if grade == 0 and gold != "":
             wrong_should_have_class.append(rec_file + "/" + record.rid)
         if gold == "" and grade != 0:
@@ -83,8 +90,8 @@ if report_errors:
     ea.write("\n".join(wrong_should_have_no_class) + "\n\n")
 
     ea.write("Records that were given the wrong class (" + str(len(incorrect)) + "):\n")
-    ea.write("Format: record id, given label, gold label\n")
-    ea.write("\n".join(map(lambda x: x[0] + ", " + str(x[1]) + ", " + str(x[2]), incorrect)) + "\n\n")
+    ea.write("Format: record id, given label\n")
+    ea.write("\n".join(map(lambda x: x[0] + ", " + str(x[1]), incorrect)) + "\n\n")
 
     ea.write("Records that should be classified but were not given a class (" + str(len(wrong_should_have_class)) + "):\n")
     ea.write("\n".join(wrong_should_have_class) + "\n")
