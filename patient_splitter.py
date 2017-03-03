@@ -10,18 +10,19 @@ Patient Splitter Method
 Krista Watkins
 Feb 10
 
-Usage: python3 recordSplitter.py dir_name output_file
-
 This doesn't promise a particular order for the patients. Is there any reason we'd care?
 '''
 #rx_tagged_section = re.compile("<(\\w+)>(.+?)</\\1>", re.DOTALL)
 rx_patient_id = re.compile("<(PATIENT_DISPLAY_ID)>(.+?)</PATIENT_DISPLAY_ID>", re.DOTALL)
 rx_record_id = re.compile("<(RECORD_DOCUMENT_ID)>(.+?)</RECORD_DOCUMENT_ID>", re.DOTALL)
 
-def get_file_list(dir):
+def get_file_list(dir, test):
     dir = re.sub(r"\\|/", re.escape(os.sep), dir)
     dir = dir.strip(os.sep)
-    return [os.sep.join((dir, f)) for f in os.listdir(dir) if f.endswith(".txt")]
+    if not test:
+        return [os.sep.join((dir, f)) for f in os.listdir(dir) if f.endswith("train.txt")]
+    else:
+        return [os.sep.join((dir, f)) for f in os.listdir(dir) if f.endswith("test.txt")]
 
 def get_record_id(record):
     patient_id_match = rx_patient_id.search(record)
@@ -75,12 +76,14 @@ def split_records(file_name):
 def load_records(dir, test=False):
     '''
     This is what to call from other programs.
-    Takes a string of a directory path.
+    Takes a string of a directory path and whether or not we want to
+        get the training data or the test data.
     Returns a list of record objects
     '''
-    return get_records(get_file_list(dir), test)
+    return get_records(get_file_list(dir, test), test)
 
 if __name__ == "__main__":
+    # Usage: python3 patientSplitter.py dir_name output_file
     files = get_file_list(sys.argv[1])
     # List of Patient strings. The method splits on the opening line,
     # so "**PROTECTED[begin]" is deleted. It'd be easy enough to add back in if necessary

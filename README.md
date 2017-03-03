@@ -10,15 +10,13 @@ Usage
 Uses Python 3 
 
 ```bash
-python(3) main.py train_dir test_dir error_file
+python(3) main.py data_dir error_file
 ```
 or
 ```bash
-run.sh train_dir test_dir error_file
+run.sh data_dir error_file
 ```
 
-train_dir is the directory containing the training data files.
-
-test_dir is the directory containing the test data files.
+data_dir is the directory containing the data files.
 
 error_file is optional. If it is present, error data will be printed to a file with that name.

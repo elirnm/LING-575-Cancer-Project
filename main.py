@@ -14,22 +14,21 @@ Contains the top-level code for classifying a records's histological grade.
 Makes calls to other more specific programs; manages and outputs what they return.
 
 
-USAGE: python(3) main.py train_dir test_dir error_file
+USAGE: python(3) main.py data_dir error_file
 
-train_dir is the directory containing the training data files.
-test_dir is the directory containing the test data files.
+data_dir is the directory containing the data files.
 error_file is optional. If it is present, error data will
     be printed to a file with that name.
 '''
 
-train_dir = sys.argv[1]
-test_dir = sys.argv[2]
-report_errors = True if len(sys.argv) == 4 else False
+data_dir = sys.argv[1]
+report_errors = True if len(sys.argv) == 3 else False
 if report_errors:
-    ea = open(sys.argv[3], 'w')
+    ea = open(sys.argv[2], 'w')
 
 # call patient_splitter to get a list of patient records
-records = patient_splitter.load_records(train_dir)
+train_records = patient_splitter.load_records(data_dir)
+test_records = patient_splitter.load_records(data_dir, test=True)
 
 # need to train the ML classifier here
 
