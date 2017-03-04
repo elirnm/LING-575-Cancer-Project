@@ -11,7 +11,7 @@ Update config.py to contain the location of your MetaMap Lite directory, then ru
 
 Windows (assumes the default Python is Python 3):
 ```
-run.cmd main.py data_dir error_file
+run.cmd data_dir error_file
 ```
 Unix:
 ```bash
