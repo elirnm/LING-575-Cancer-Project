@@ -4,6 +4,7 @@ Record object - Stores patient record information
 
 """
 import re
+from annotation_matcher import search_annotation
 from collections import defaultdict
 from config import METAMAP_DIR
 from subprocess import Popen, PIPE, STDOUT
@@ -25,6 +26,11 @@ class Record:
         self.sections = self.close_tags(record)
         self.file = file
         self.annotation = annotation
+        self.gold = self._get_grades()
+        
+    def _get_grades(self):
+        annots_string = search_annotation(self.annotation, "Grade Category")
+        return [int(n.group()) for n in re.finditer("\\d+", annots_string)]
 
     @staticmethod
     def close_tags(text):
