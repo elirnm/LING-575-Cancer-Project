@@ -17,7 +17,10 @@ rx_patient_id = re.compile("<(PATIENT_DISPLAY_ID)>(.+?)</PATIENT_DISPLAY_ID>", r
 rx_record_id = re.compile("<(RECORD_DOCUMENT_ID)>(.+?)</RECORD_DOCUMENT_ID>", re.DOTALL)
 
 def get_file_list(dir, test):
-    dir = re.sub(r"\\|/", re.escape(os.sep), dir)
+    if "win" in sys.platform:
+        dir = re.sub(r"\\|/", re.escape(os.sep), dir)
+    else:
+        dir = re.sub(r"\\|/", os.sep, dir)
     dir = dir.strip(os.sep)
     if not test:
         return [os.sep.join((dir, f)) for f in os.listdir(dir) if f.endswith("train.txt")]
