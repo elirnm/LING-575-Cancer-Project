@@ -28,7 +28,8 @@ if report_errors:
 
 # call patient_splitter to get a list of patient records
 train_records = patient_splitter.load_records(data_dir)
-test_records = patient_splitter.load_records(data_dir, test=True)
+# leave the next line commented out until we're ready to run on test data
+# test_records = patient_splitter.load_records(data_dir, test=True)
 
 # need to train the ML classifier here
 
@@ -45,7 +46,7 @@ if report_errors:
     wrong_should_have_no_class = []
     wrong_should_have_class = []
     incorrect = []
-for record in records:
+for record in train_records:
     gold = annotation_matcher.search_annotation(record.annotation, "Grade Category")
     grade = rule_based_classifier.classify_record(record.text)
     seen += 1

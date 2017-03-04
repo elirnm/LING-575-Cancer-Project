@@ -9,12 +9,17 @@ Usage
 
 Uses Python 3 
 
-```bash
-python(3) main.py data_dir error_file
+Windows (assuming the default python is python 3):
 ```
-or
+run.cmd main.py data_dir error_file
+```
+Unix:
 ```bash
 run.sh data_dir error_file
+```
+Manually:
+```bash
+python(3) main.py data_dir error_file
 ```
 
 data_dir is the directory containing the data files.
