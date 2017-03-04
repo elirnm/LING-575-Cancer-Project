@@ -46,13 +46,13 @@ class Record:
     @staticmethod
     def get_umls_tags(text):
         if "win" in sys.platform:
-            metamap_path = METAMAP_DIR + r"\metamaplite.bat"
+            metamap_path = METAMAP_DIR + r"/metamaplite.bat"
         else:
-            metamap_path = METAMAP_DIR + r"\metamaplite.sh"
+            metamap_path = METAMAP_DIR + r"/metamaplite.sh"
         p = Popen([metamap_path, "--pipe",
-                   "--indexdir=" + METAMAP_DIR + r"\data\ivf\strict",
-                   "--modelsdir=" + METAMAP_DIR + "\data\models",
-                   "--specialtermsfile=" + METAMAP_DIR + "\data\specialterms.txt",
+                   "--indexdir=" + METAMAP_DIR + r"/data/ivf/strict",
+                   "--modelsdir=" + METAMAP_DIR + "/data/models",
+                   "--specialtermsfile=" + METAMAP_DIR + "/data/specialterms.txt",
                    "--brat"], stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=True)
         stdout = p.communicate(input=text.encode())[0]
 
