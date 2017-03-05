@@ -76,15 +76,16 @@ for record in train_records:
 
     # update variables for doing error analysis here
     if report_errors:
+        pos_grades = [x for x in grade if x != 0]
         rec_file = record.file.split(os.sep)[-1]
-        if len([x for x in grade if x != 0]) != len(gold):
-            len_mismatches.append((rec_file, len([x for x in grade if x != 0]), len(gold)))
-        # if str(grade) not in gold and gold != "" and grade != 0:
-        #     incorrect.append((rec_file + "/" + record.rid, str(grade), gold))
-        # if grade == 0 and gold != "":
-        #     wrong_should_have_class.append(rec_file + "/" + record.rid)
-        # if gold == "" and grade != 0:
-        #     wrong_should_have_no_class.append(rec_file + "/" + record.rid)
+        if grade != gold and gold != [] and grade != [0]:
+            incorrect.append((rec_file + "/" + record.rid, grade, gold))
+        if grade == [0] and gold != []:
+            wrong_should_have_class.append((rec_file + "/" + record.rid, gold))
+        if gold == [] and grade != [0]:
+            wrong_should_have_no_class.append((rec_file + "/" + record.rid, grade))
+        if len(pos_grades) != len(gold):
+            len_mismatches.append((rec_file + "/" + record.rid, len(pos_grades), len(gold)))
 
 # output accuracy data
 print(str(seen) + " records processed")
@@ -98,23 +99,27 @@ print(str(spec_correct) + " tumors classified with correct ordering (rough estim
 
 # print information for doing error analysis here
 if report_errors:
-    # ea.write(str(seen) + " records processed\n")
-    # ea.write(str(should_have_class) + " records should be classified\n")
-    # ea.write(str(classified) + " records classified\n")
-    # ea.write(str(correct) + " records correctly classified\n")
+    ea.write(str(seen) + " records processed\n")
+    ea.write(str(should_have_class[0]) + " records should be classified, " + str(should_have_class[1]) + " tumors should be classified\n") 
+    ea.write(str(classified[0]) + " records classified, " + str(classified[1]) + " tumors classified\n")
+    ea.write(str(correct) + " tumors correctly classified ignoring ordering (did the grade appear in the gold; it might not actually be correct for that tumor)\n")
+    ea.write(str(full_correct) + " records classified fully correctly\n")
+    ea.write(str(spec_correct) + " tumors classified with correct ordering (rough estimate)\n\n")
     # ea.write("Accuracy on records classified = " + str(correct / classified) + "\n")
     # ea.write("Accuracy on records that should be classified = " + str(correct / should_have_class) + "\n\n")
 
-    # ea.write("Records that should be unclassified but were given a class (" + str(len(wrong_should_have_no_class)) + "):\n")
-    # ea.write("\n".join(wrong_should_have_no_class) + "\n\n")
+    ea.write("Records that should be unclassified but were given a class (" + str(len(wrong_should_have_no_class)) + "):\n")
+    ea.write("Format: record, grade given\n")
+    ea.write("\n".join([x[0] + ", " + str(x[1]) for x in wrong_should_have_no_class]) + "\n\n")
 
-    # ea.write("Records that were given the wrong class (" + str(len(incorrect)) + "):\n")
-    # ea.write("Format: record id, given label, gold label\n")
-    # ea.write("\n".join(map(lambda x: x[0] + ", " + str(x[1]) + ", " + x[2], incorrect)) + "\n\n")
+    ea.write("Records that were given the wrong class (" + str(len(incorrect)) + "):\n")
+    ea.write("Format: record, given label, gold label\n")
+    ea.write("\n".join(map(lambda x: x[0] + ", " + str(x[1]) + ", " + str(x[2]), incorrect)) + "\n\n")
 
-    # ea.write("Records that should be classified but were not given a class (" + str(len(wrong_should_have_class)) + "):\n")
-    # ea.write("\n".join(wrong_should_have_class) + "\n")
+    ea.write("Records that should be classified but were not given a class (" + str(len(wrong_should_have_class)) + "):\n")
+    ea.write("Format: record, gold label\n")
+    ea.write("\n".join([x[0] + ", " + str(x[1]) for x in wrong_should_have_class]) + "\n\n")
 
-    ea.write("Records where length of the classified grade is different than the length of the gold standard (" + str(len(len_mismatches)) + ")\n")
-    ea.write("Format: file, grade length, gold length\n")
+    ea.write("Records where length of the classified grade is different than the length of the gold standard (" + str(len(len_mismatches)) + "):\n")
+    ea.write("Format: record, grade length, gold length\n")
     ea.write("\n".join([x[0] + ", " + str(x[1]) + ", " + str(x[2]) for x in len_mismatches]) + "\n")
