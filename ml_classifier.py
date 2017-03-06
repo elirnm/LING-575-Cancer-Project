@@ -1,5 +1,7 @@
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
 
 '''
 Eli Miller
@@ -30,7 +32,7 @@ def train(text):
     mnb = MultinomialNB().fit(train_counts, labels)
     return count_vect, mnb
 
-def test(model, count_vect, text):
+def test(classifier, count_vect, text):
     '''
     Takes a trained classifier, a fitted vectorizer, and a list of strings to classify.
     Returns a list containing the classification of each string, in the same order as
@@ -39,13 +41,13 @@ def test(model, count_vect, text):
         to have named labels.
     '''
     counts = count_vect.transform(text)
-    pred = model.predict(counts)
+    pred = classifier.predict(counts)
     return list(pred)
 
 if __name__ == "__main__":
     import sys
     text = [("presidents senators vote bill law", "1"), ("keyboard RAM memory CPU", "0")]
-    count_vect, model = train(text)
+    count_vect, classifier = train(text)
     unktext = ["presidents and senators are people", "I need more memory in my keyboard"]
-    ans = test(model, count_vect, unktext)
+    ans = test(classifier, count_vect, unktext)
     print(ans)
