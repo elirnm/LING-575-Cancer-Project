@@ -1,4 +1,5 @@
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
@@ -26,13 +27,15 @@ def train(text):
     Currently creates a multinominal naive bayes classifier.
     '''
     count_vect = CountVectorizer()
+    # selector = SelectKBest(chi2, k='all')
     labels = [x[1] for x in text]
     lines = [x[0] for x in text]
     train_counts = count_vect.fit_transform(lines)
+    # best_counts = selector.fit_transform(train_counts, labels)
     mnb = MultinomialNB().fit(train_counts, labels)
-    return count_vect, mnb
+    return [count_vect, mnb]
 
-def test(classifier, count_vect, text):
+def test(trained_objects, text):
     '''
     Takes a trained classifier, a fitted vectorizer, and a list of strings to classify.
     Returns a list containing the classification of each string, in the same order as
@@ -40,7 +43,11 @@ def test(classifier, count_vect, text):
         converted back to strings after receiving the output of this method if you wish
         to have named labels.
     '''
+    count_vect = trained_objects[0]
+    classifier = trained_objects[1]
+    # selector = trained_objects[2]
     counts = count_vect.transform(text)
+    # best_counts = selector.transform(counts)
     pred = classifier.predict(counts)
     return list(pred)
 

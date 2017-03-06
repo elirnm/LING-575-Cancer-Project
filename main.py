@@ -58,7 +58,7 @@ while len(culled_negatives) <= len(positive_lines):
         used.add(negative_lines[r])
         culled_negatives.append(negative_lines[r])
 training_lines = [(x, "1") for x in positive_lines] + [(x, "0") for x in negative_lines]
-count_vect, classifier = ml_classifier.train(training_lines)
+trained_objects = ml_classifier.train(training_lines)
 
 # classify each record
 # rb_* variables track results of rule-based classifier only
@@ -80,7 +80,7 @@ if report_errors:
 for record in train_records:
     gold = record.gold
     rb_grade = rule_based_classifier.classify_record(record.text)
-    ml_grade = ml_classifier.test(classifier, count_vect, record.text.split("\n"))
+    ml_grade = ml_classifier.test(trained_objects, record.text.split("\n"))
     ml_grade = [int(x) for x in ml_grade if x != "0"]
     seen += 1
     if gold != []:
