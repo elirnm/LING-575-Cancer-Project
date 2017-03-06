@@ -22,7 +22,7 @@ error_file is optional. If it is present, error data will
 '''
 
 data_dir = sys.argv[1]
-report_errors = True if len(sys.argv) == 3 else False
+report_errors = len(sys.argv) == 3
 if report_errors:
     ea = open(sys.argv[2], 'w')
 
@@ -89,8 +89,8 @@ for record in train_records:
 
 # output accuracy data
 print(str(seen) + " records processed")
-print(str(should_have_class[0]) + " records should be classified, " + str(should_have_class[1]) + " tumors should be classified") 
-print(str(classified[0]) + " records classified, " + str(classified[1]) + " tumors classified")
+print(str(should_have_class[1]) + " tumors in " + str(should_have_class[0]) + " records should be classified") 
+print(str(classified[1]) + " tumors in " + str(classified[0]) + " records classified")
 print(str(correct) + " tumors correctly classified ignoring ordering (did the grade appear in the gold; it might not actually be correct for that tumor)")
 print(str(full_correct) + " records classified fully correctly")
 print(str(spec_correct) + " tumors classified with correct ordering (rough estimate)")
@@ -100,8 +100,8 @@ print(str(spec_correct) + " tumors classified with correct ordering (rough estim
 # print information for doing error analysis here
 if report_errors:
     ea.write(str(seen) + " records processed\n")
-    ea.write(str(should_have_class[0]) + " records should be classified, " + str(should_have_class[1]) + " tumors should be classified\n") 
-    ea.write(str(classified[0]) + " records classified, " + str(classified[1]) + " tumors classified\n")
+    ea.write(str(should_have_class[1]) + " tumors in " + str(should_have_class[0]) + " records should be classified\n") 
+    ea.write(str(classified[1]) + " tumors in " + str(classified[0]) + " records classified\n")
     ea.write(str(correct) + " tumors correctly classified ignoring ordering (did the grade appear in the gold; it might not actually be correct for that tumor)\n")
     ea.write(str(full_correct) + " records classified fully correctly\n")
     ea.write(str(spec_correct) + " tumors classified with correct ordering (rough estimate)\n\n")
