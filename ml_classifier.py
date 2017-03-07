@@ -1,5 +1,10 @@
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression # MaxEnt
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 
 '''
 Eli Miller
@@ -24,13 +29,17 @@ def train(text):
     Currently creates a multinominal naive bayes classifier.
     '''
     count_vect = CountVectorizer()
+    selector = VarianceThreshold()
+    # selector = SelectKBest(chi2, k=10)
     labels = [x[1] for x in text]
     lines = [x[0] for x in text]
     train_counts = count_vect.fit_transform(lines)
-    mnb = MultinomialNB().fit(train_counts, labels)
-    return count_vect, mnb
+    train_counts = selector.fit_transform(train_counts, labels)
+    eclf = VotingClassifier(estimators=[('svm', SVC()), ('maxent', LogisticRegression()), ('rf', RandomForestClassifier()), ('dt', DecisionTreeClassifier())])
+    classifier = eclf.fit(train_counts, labels)
+    return [count_vect, classifier, selector]
 
-def test(model, count_vect, text):
+def test(trained_objects, text):
     '''
     Takes a trained classifier, a fitted vectorizer, and a list of strings to classify.
     Returns a list containing the classification of each string, in the same order as
@@ -38,14 +47,18 @@ def test(model, count_vect, text):
         converted back to strings after receiving the output of this method if you wish
         to have named labels.
     '''
+    count_vect = trained_objects[0]
+    classifier = trained_objects[1]
+    selector = trained_objects[2]
     counts = count_vect.transform(text)
-    pred = model.predict(counts)
+    counts = selector.transform(counts)
+    pred = classifier.predict(counts)
     return list(pred)
 
 if __name__ == "__main__":
     import sys
     text = [("presidents senators vote bill law", "1"), ("keyboard RAM memory CPU", "0")]
-    count_vect, model = train(text)
+    count_vect, classifier = train(text)
     unktext = ["presidents and senators are people", "I need more memory in my keyboard"]
-    ans = test(model, count_vect, unktext)
+    ans = test(classifier, count_vect, unktext)
     print(ans)
