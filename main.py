@@ -5,6 +5,7 @@ import patient_splitter
 import rule_based_classifier
 import ml_classifier
 import annotation_matcher
+import record as record_module
 
 '''
 Breast and Lung Cancer Grading Pipeline
@@ -43,20 +44,18 @@ for record in train_records:
     for grade in grade_text:
         if grade == "":
             continue
-        # found = False
         # for line in record.text.split("\n"):
-        #     # add metamap stuff to the lines here before adding them to the positive/negative lists
-        #     if grade in line and not found:
-        #         positive_lines.append(line)
-        #         found = True
-        #     elif grade not in line:
-        #         negative_lines.append(line)
-        positive_lines.append(grade)
+            # # add metamap stuff to the lines here before adding them to the positive/negative lists
+            # if grade in line:
+            #     positive_lines.append(line)
+            # else:
+            #     negative_lines.append(line)
+        positive_lines.append(grade) # add metamap stuff here
     for line in record.text.split("\n"):
         if grade not in line:
             negative_lines.append(line)
-print(len(positive_lines))
-print(len(negative_lines))
+# print(len(positive_lines))
+# print(len(negative_lines))
 # change this next line if we want more even numbers of positive and negative examples (we probably do)
 culled_negatives = []
 used = set()
@@ -88,8 +87,13 @@ if report_errors:
 for record in train_records:
     gold = record.gold
     rb_grade = rule_based_classifier.classify_record(record.text)
-    ml_grade = ml_classifier.test(trained_objects, record.text.split("\n"))
+    ml_lines = record.text.split("\n")
+    ml_grade = ml_classifier.test(trained_objects, ml_lines)
+    for i in range(len(ml_grade) - 1, -1, -1):
+        if ml_grade[i] == "0":
+            del ml_lines[i]
     ml_grade = [int(x) for x in ml_grade if x != "0"]
+    # figure out how to extract the specific grade from the lines
     seen += 1
     if gold != []:
         should_have_class[0] += 1
@@ -104,7 +108,7 @@ for record in train_records:
         ml_classified[1] += len(ml_grade)
     if rb_grade == gold:
         rb_full_correct += 1
-    if ml_grade == gold and ml_grade != []:
+    if len(ml_grade) == len(gold) and ml_grade != []:
         ml_full_correct += 1
     for tumor_grade in rb_grade:
         if tumor_grade in gold:
