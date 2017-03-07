@@ -54,7 +54,7 @@ for record in train_records:
             #     negative_lines.append(line)
         positive_lines.append(grade) # add metamap stuff here
     for line in record.text.split("\n"):
-        print(record_module.get_UMLS_tags(line))
+        # print(record_module.get_UMLS_tags(line))
         if grade not in line:
             negative_lines.append(line)
 # randomly cull the negative examples so that we have a 50:50 positive/negative split of training data

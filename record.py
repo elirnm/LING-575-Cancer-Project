@@ -9,7 +9,6 @@ from collections import defaultdict
 from config import METAMAP_DIR
 from subprocess import Popen, PIPE, STDOUT
 import sys
-from gensim.models import Word2Vec
 
 
 class Record:
@@ -124,13 +123,6 @@ def get_UMLS_tags(text):
            """
     tags = metamap_pipeline(text)
     return parse_umls_terms(tags)
-
-
-def word2vec(text):
-    model = Word2Vec.load_word2vec_format('data/vectors.txt', binary=False)
-    for word in text.split():
-        print(model[word])
-    return 0
 
 class Term:
 
