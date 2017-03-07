@@ -29,6 +29,12 @@ word_grade_rx = re.compile("^(low|intermediate|moderate|high)(\\s+(to|and)\\s+(l
 overall_grade_rx = re.compile("(overall\\s+grade|total\\s+score|nottingham\\s+histologic\\s+(grade|score|score-grade))\\s*-?\\s*(:)?\\s*(grade|g|score)?\\s*-?\\s*((\\d+|I+[XV]?|VI*|%s)+\\s*((/|of|out of|-|to)\\s*(\\d+|III|IV|IX|three|four|nine))?)"%num_str, re.IGNORECASE)
 form_grade_rx = re.compile("_*x_*\\s*grade\\s*(\\d+|I+V?|one|two|three|four)", re.IGNORECASE)
 
+# Regex for string classification
+sum_rx = re.compile("\\d\\s*\+\\s*\\d\\s*\+\\s*\\d\\s*=\\s*(\\d)")
+diff_rx = re.compile("(poorly|moderately|moderate|well)(\\s+(to|and)\\s+(poorly|moderately|moderate|well))?(\\s+|-)differentiated", re.IGNORECASE)
+word_rx = re.compile("(low|intermediate|moderate|high)(\\s+(to|and)\\s+(low|intermediate|moderate|high))?", re.IGNORECASE)
+num_rx = re.compile("(at\\s*least\\s*)?(grade|g)?\\s*((\\d+|I+[XV]?|VI*|%s)\\s*((/|of|out of|to|-)\\s*(\\d+|I+[XV]?|VI*|%s))?)"%(num_str, num_str), re.IGNORECASE)
+
 def classify_record(rec, use_diff):
     # Try multiple header variations
     
@@ -224,6 +230,40 @@ def classify_section(section):
 
     return 0
 
+def classify_string(string):
+    # Special Case for nottingham a+b+c=y
+    sum_found = sum_rx.search(string)
+    if sum_found:
+        return extract_number_grade(sum_found, 1, None, None)
+
+    # Find differentiation at the beginning of the section
+    differentiation_found = diff_rx.search(string)
+    if differentiation_found:
+        return extract_word_grade(differentiation_found, 1, 4)
+    
+    # Low/medium/high grade at section beginning
+    word_grade_found = word_rx.search(string)
+    if word_grade_found:
+        return extract_word_grade(word_grade_found, 1, 4)
+    
+    # Find numerical grade at the beginning of the section
+    number_found = num_rx.search(string)
+    if number_found:
+        return extract_number_grade(number_found, 4, 7, 6)
+
+
+    # Look for the overall grade farther along in the section
+    overall_grade_found = overall_grade_rx.search(string)
+    if overall_grade_found:
+        return extract_number_grade(overall_grade_found, 6, 9, 8)
+
+    # Look for grade in form format: Overall Grade: __x__
+    form_grade_found = form_grade_rx.search(string)
+    if form_grade_found:
+        return extract_number_grade(form_grade_found, 1, None, None)
+
+    return 0
+
 '''
 Methods for determining integer grade from a regex match or string
 '''
@@ -391,3 +431,4 @@ if __name__ == "__main__":
             break
     print("Correct", correct_count, "Over", overclassified, "Total", g_count, "Unclassified", len(unclassified))
     print((correct_count + 0.0)/g_count)
+    # IGNORE PAT157, REC88
