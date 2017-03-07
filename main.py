@@ -21,7 +21,7 @@ error_file is optional. If it is present, error data will
     be printed to a file with that name.
 '''
 # Corrections for incorrectly-annotated records
-corrections = {'PAT7':1, 'PAT14':2, 'REC86':1, 'PAT157':1, 'REC720':3, 'REC191':1, 'REC798':3}
+corrections = {'PAT7':[1], 'PAT14':[2], 'REC86':[1], 'PAT157':[1], 'REC720':[3], 'REC191':[1], 'REC798':[3]}
 
 data_dir = sys.argv[1]
 report_errors = len(sys.argv) == 3
