@@ -57,43 +57,67 @@ class Record:
                 cleaned[curr_tag] += line + " "
         return cleaned
 
-    def get_umls_tags(self, text):
+    def get_umls_tags(self):
         """
-        Runs Metamap Lite over a given input string
+        Runs Metamap Lite over the record text
 
-        :param text: text to run NER using the UMLS terms within Metamap Lite
         :return: a list of terms extracted from the text along with their associated concepts
         """
-        if "win" in sys.platform:
-            metamap_path = METAMAP_DIR + r"/metamaplite.bat"
-        else:
-            metamap_path = METAMAP_DIR + r"/metamaplite.sh"
-        p = Popen([metamap_path, "--pipe",
-                   "--indexdir=" + METAMAP_DIR + r"/data/ivf/strict",
-                   "--modelsdir=" + METAMAP_DIR + "/data/models",
-                   "--specialtermsfile=" + METAMAP_DIR + "/data/specialterms.txt",
-                   "--brat"], stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=True)
-        stdout = p.communicate(input=text.encode())[0]
-
-        CURR_TAG = None
-        for line in stdout.decode().split("\n"):
-            if re.match(r"T[0-9]+", line):
-                line = line.split()
-                CURR_TAG = Term(line[0], line[2], line[3], line[4])
-                self.umls_tags.append(CURR_TAG)
-            elif re.match(r"[A-Z][0-9]+", line):
-                line = line.split()
-                CURR_TAG.concepts.append(Concept(line[0], line[3], line[4]))
+        tags = metamap_pipeline(self.text)
+        self.umls_tags = parse_umls_terms(tags)
         return self.umls_tags
 
     def get_tumor_mentions(self):
-        for term in self.get_umls_tags(self.text):
+        for term in self.get_umls_tags():
             print(term.tag)
             for concept in term.concepts:
                 print(concept.concept_id)
 
     def dump(self, output_file):
         output_file.write(self.text)
+
+
+def metamap_pipeline(text):
+    if "win" in sys.platform:
+        metamap_path = METAMAP_DIR + r"/metamaplite.bat"
+    else:
+        metamap_path = METAMAP_DIR + r"/metamaplite.sh"
+    p = Popen([metamap_path, "--pipe",
+               "--indexdir=" + METAMAP_DIR + r"/data/ivf/strict",
+               "--modelsdir=" + METAMAP_DIR + "/data/models",
+               "--specialtermsfile=" + METAMAP_DIR + "/data/specialterms.txt",
+               "--brat"], stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=True)
+    return p.communicate(input=text.encode())[0]
+
+
+def parse_umls_terms(metamap_output):
+    """
+    Generates Term/Concept objects from parsing the metamap raw output
+    :param metamap_output: BRAT format metamap lite output
+    :return: array of Terms with their linked UMLS Concepts.
+    """
+    umls_tags = []
+    CURR_TAG = None
+    for line in metamap_output.decode().split("\n"):
+        if re.match(r"T[0-9]+", line):
+            line = line.split()
+            CURR_TAG = Term(line[0], line[2], line[3], line[4])
+            umls_tags.append(CURR_TAG)
+        elif re.match(r"[A-Z][0-9]+", line):
+            line = line.split()
+            CURR_TAG.concepts.append(Concept(line[0], line[3], line[4]))
+    return umls_tags
+
+
+def get_UMLS_tags(text):
+    """
+           Runs Metamap Lite over a given input string
+
+           :param text: text to run NER using the UMLS terms within Metamap Lite
+           :return: a list of terms extracted from the text along with their associated concepts
+           """
+    tags = metamap_pipeline(text)
+    return parse_umls_terms(tags)
 
 
 class Term:
