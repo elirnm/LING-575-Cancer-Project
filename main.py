@@ -52,6 +52,7 @@ for record in train_records:
             #     negative_lines.append(line)
         positive_lines.append(grade) # add metamap stuff here
     for line in record.text.split("\n"):
+        print(record_module.get_UMLS_tags(line))
         if grade not in line:
             negative_lines.append(line)
 # print(len(positive_lines))

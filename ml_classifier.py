@@ -29,15 +29,15 @@ def train(text):
     Currently creates a multinominal naive bayes classifier.
     '''
     count_vect = CountVectorizer()
-    # selector = VarianceThreshold(threshold=(0.7 * (1 - 0.7)))
+    selector = VarianceThreshold()
     # selector = SelectKBest(chi2, k=10)
     labels = [x[1] for x in text]
     lines = [x[0] for x in text]
     train_counts = count_vect.fit_transform(lines)
-    # train_counts = selector.fit_transform(train_counts, labels)
+    train_counts = selector.fit_transform(train_counts, labels)
     eclf = VotingClassifier(estimators=[('svm', SVC()), ('maxent', LogisticRegression()), ('rf', RandomForestClassifier()), ('dt', DecisionTreeClassifier())])
     classifier = eclf.fit(train_counts, labels)
-    return [count_vect, classifier]
+    return [count_vect, classifier, selector]
 
 def test(trained_objects, text):
     '''
@@ -49,9 +49,9 @@ def test(trained_objects, text):
     '''
     count_vect = trained_objects[0]
     classifier = trained_objects[1]
-    # selector = trained_objects[2]
+    selector = trained_objects[2]
     counts = count_vect.transform(text)
-    # counts = selector.transform(counts)
+    counts = selector.transform(counts)
     pred = classifier.predict(counts)
     return list(pred)
 
