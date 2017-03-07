@@ -28,16 +28,16 @@ def get_annotation(rid, file):
 def search_annotation(annot, search):
 	''' Returns the entry for one category in a record's annotation.
 	Takes the dictionary representation of the annotation and a search term.
-	Returns a string, where each record in annot (e.g. 1, 2, 3) is separated by ';'
+	Returns a string, where each record in annot (e.g. 1, 2, 3) is separated by '~'
 	Returns an empty string if the search term is not found anywhere.
 	'''
 	answers = ""
 	for record in annot:
 		try:
-			answers += annot[record][search] + ";"
+			answers += annot[record][search] + "~"
 		except KeyError:
 			pass
-	return answers.strip(";")
+	return answers.strip("~")
 
 if __name__ == "__main__":
 	# to test: python annotation_matcher.py record_id filename

@@ -1,7 +1,7 @@
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.svm import SVC
+from sklearn.svm import SVC, NuSVC
 from sklearn.linear_model import LogisticRegression
 
 '''
@@ -32,7 +32,7 @@ def train(text):
     lines = [x[0] for x in text]
     train_counts = count_vect.fit_transform(lines)
     # best_counts = selector.fit_transform(train_counts, labels)
-    mnb = MultinomialNB().fit(train_counts, labels)
+    mnb = SVC().fit(train_counts, labels)
     return [count_vect, mnb]
 
 def test(trained_objects, text):

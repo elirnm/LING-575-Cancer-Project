@@ -37,27 +37,35 @@ train_records = patient_splitter.load_records(data_dir)
 positive_lines = []
 negative_lines = []
 for record in train_records:
-    grade_text = annotation_matcher.search_annotation(record.annotation, "Histologic Grade Text").split(";")
+    grade_text = annotation_matcher.search_annotation(record.annotation, "Histologic Grade Text").split("~")
+    # if len(grade_text) > len(annotation_matcher.search_annotation(record.annotation, "Grade Category").split("~")):
+    #     print(record.file + "/" + str(record.rid))
     for grade in grade_text:
         if grade == "":
             continue
-        found = False
-        for line in record.text.split("\n"):
-            # add metamap stuff to the lines here before adding them to the positive/negative lists
-            if grade in line and not found:
-                positive_lines.append(line)
-                found = True
-            elif grade not in line:
-                negative_lines.append(line)
+        # found = False
+        # for line in record.text.split("\n"):
+        #     # add metamap stuff to the lines here before adding them to the positive/negative lists
+        #     if grade in line and not found:
+        #         positive_lines.append(line)
+        #         found = True
+        #     elif grade not in line:
+        #         negative_lines.append(line)
+        positive_lines.append(grade)
+    for line in record.text.split("\n"):
+        if grade not in line:
+            negative_lines.append(line)
+print(len(positive_lines))
+print(len(negative_lines))
 # change this next line if we want more even numbers of positive and negative examples (we probably do)
 culled_negatives = []
 used = set()
-while len(culled_negatives) <= len(positive_lines):
+while len(culled_negatives) < len(positive_lines):
     r = randrange(0, len(negative_lines))
     if negative_lines[r] not in used:
         used.add(negative_lines[r])
         culled_negatives.append(negative_lines[r])
-training_lines = [(x, "1") for x in positive_lines] + [(x, "0") for x in negative_lines]
+training_lines = [(x, "1") for x in positive_lines] + [(x, "0") for x in culled_negatives]
 trained_objects = ml_classifier.train(training_lines)
 
 # classify each record
