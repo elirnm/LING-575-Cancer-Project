@@ -9,6 +9,7 @@ from collections import defaultdict
 from config import METAMAP_DIR
 from subprocess import Popen, PIPE, STDOUT
 import sys
+from gensim.models import Word2Vec
 
 
 class Record:
@@ -80,13 +81,18 @@ class Record:
 def metamap_pipeline(text):
     if "win" in sys.platform:
         metamap_path = METAMAP_DIR + r"/metamaplite.bat"
+        p = Popen([metamap_path, "--pipe",
+                   "--indexdir=" + METAMAP_DIR + r"/data/ivf/strict",
+                   "--modelsdir=" + METAMAP_DIR + "/data/models",
+                   "--specialtermsfile=" + METAMAP_DIR + "/data/specialterms.txt",
+                   "--brat"], stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=True)
     else:
         metamap_path = METAMAP_DIR + r"/metamaplite.sh"
-    p = Popen([metamap_path, "--pipe",
-               "--indexdir=" + METAMAP_DIR + r"/data/ivf/strict",
-               "--modelsdir=" + METAMAP_DIR + "/data/models",
-               "--specialtermsfile=" + METAMAP_DIR + "/data/specialterms.txt",
-               "--brat"], stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=True)
+        p = Popen([metamap_path, "--pipe",
+                   "--indexdir=" + METAMAP_DIR + r"/data/ivf/strict",
+                   "--modelsdir=" + METAMAP_DIR + "/data/models",
+                   "--specialtermsfile=" + METAMAP_DIR + "/data/specialterms.txt",
+                   "--brat"], stdin=PIPE, stdout=PIPE, stderr=STDOUT)
     return p.communicate(input=text.encode())[0]
 
 
@@ -119,6 +125,12 @@ def get_UMLS_tags(text):
     tags = metamap_pipeline(text)
     return parse_umls_terms(tags)
 
+
+def word2vec(text):
+    model = Word2Vec.load_word2vec_format('data/vectors.txt', binary=False)
+    for word in text.split():
+        print(model[word])
+    return 0
 
 class Term:
 
