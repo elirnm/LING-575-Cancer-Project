@@ -55,9 +55,7 @@ for record in train_records:
         print(record_module.get_UMLS_tags(line))
         if grade not in line:
             negative_lines.append(line)
-# print(len(positive_lines))
-# print(len(negative_lines))
-# change this next line if we want more even numbers of positive and negative examples (we probably do)
+# randomly cull the negative examples so that we have a 50:50 positive/negative split of training data
 culled_negatives = []
 used = set()
 while len(culled_negatives) < len(positive_lines):
@@ -87,7 +85,7 @@ if report_errors:
     len_mismatches = []
 for record in train_records:
     gold = record.gold
-    rb_grade = rule_based_classifier.classify_record(record.text)
+    rb_grade = rule_based_classifier.classify_record(record.text, 2)
     ml_lines = record.text.split("\n")
     ml_grade = ml_classifier.test(trained_objects, ml_lines)
     for i in range(len(ml_grade) - 1, -1, -1):
@@ -95,6 +93,8 @@ for record in train_records:
             del ml_lines[i]
     ml_grade = [int(x) for x in ml_grade if x != "0"]
     # figure out how to extract the specific grade from the lines
+    # ml_lines = [rule_based_classifier.classify_record(x, 2)[0] for x in ml_lines]
+    print(ml_lines)
     seen += 1
     if gold != []:
         should_have_class[0] += 1
@@ -146,10 +146,10 @@ for record in train_records:
 # output accuracy data
 print(str(seen) + " records processed")
 print(str(should_have_class[1]) + " tumors in " + str(should_have_class[0]) + " records should be classified") 
-# print(str(rb_classified[1]) + " tumors in " + str(rb_classified[0]) + " records classified -- rule-based")
-# print(str(rb_correct) + " tumors correctly classified ignoring ordering (did the grade appear in the gold; it might not actually be correct for that tumor) -- rule-based")
-# print(str(rb_full_correct) + " records classified fully correctly -- rule-based")
-# print(str(rb_spec_correct) + " tumors classified with correct ordering (rough estimate) -- rule-based")
+print(str(rb_classified[1]) + " tumors in " + str(rb_classified[0]) + " records classified -- rule-based")
+print(str(rb_correct) + " tumors correctly classified ignoring ordering (did the grade appear in the gold; it might not actually be correct for that tumor) -- rule-based")
+print(str(rb_full_correct) + " records classified fully correctly -- rule-based")
+print(str(rb_spec_correct) + " tumors classified with correct ordering (rough estimate) -- rule-based")
 # print("Accuracy on records classified = " + str(correct / classified))
 # print("Accuracy on records that should be classified = " + str(correct / should_have_class))
 print(str(ml_classified[1]) + " tumors in " + str(ml_classified[0]) + " records classified -- machine learning")

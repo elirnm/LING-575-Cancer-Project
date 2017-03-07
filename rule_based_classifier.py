@@ -2,140 +2,275 @@ import re
 
 '''
 Krista Watkins
-Usage: call classify_record(record.text)
+Usage: call classify_record(record.text, diff_option)
 
-Rule-based classification
-(In progress)
-Returns integers 0-4
+0: Skip differentiation search
+1: Return max diff, if there's more than one
+2: skip "poorly differentiated"
+
+Returns array of integers 0-4
     0 for unknown (default)
-
-Implemented:
-    Find numerical grade to the right of "Histologic Grade"
-To Implement:
-    Find grade elsewhere in the document
 '''
 
 # Rexeges
 num_str = "one|two|three|four|five|six|seven|eight|nine"
-hist_title_rx = re.compile("histologic grade:", re.IGNORECASE)
-
-'''
-Groups
-0: all
-1: words preceding grade numbers
-2: at least
-3: nottingham
-4: grade or g
-5: whole number string
-6: first number
-7: 'of' or '/' second number
-8: 'of' or '/'
-9: second number
-'''
-number_grade_rx = re.compile("histologic grade:\\s*((at least)?\\s*(nottingham|bloom-richardson)?\\s*(grade|g|score)?)\\s*((\\d+|I+[XV]?|VI*|%s)\\s*((/|of)\\s*(\\d+|III|IV|IX|three|four|nine))?)"%num_str, re.IGNORECASE)
-differentiation_rx = re.compile("histologic grade:\\s*((poorly|moderately|moderate|well)(\\s+(to|and)\\s+(poorly|moderately|moderate|well))?\\s+differentiated)", re.IGNORECASE)
-word_grade_rx = re.compile("histologic grade:\\s*(low|intermediate|moderate|high)(\\s+(to|and)\\s+(low|intermediate|moderate|high))?(\\s+grade)?", re.IGNORECASE);
+histologic_grade_rx = re.compile("histologic\\s+(grade):?", re.IGNORECASE)
+nottgham_hist_score_rx = re.compile("nottingham\\s+histologic\\s+score:?", re.IGNORECASE)
+# Numbers in groups 4 and 7
+# comparator in group 6 (either 'of' for max, 'to' for range)
+number_grade_rx = re.compile("^(at\\s*least\\s*)?(grade|g)?\\s*((\\d+|I+[XV]?|VI*|%s)\\s*((/|of|out of|to|-)\\s*(\\d+|I+[XV]?|VI*|%s))?)"%(num_str, num_str), re.IGNORECASE)
+# Differentiation in groups 1 and 4. Starts at line beginning
+differentiation_rx = re.compile("^(poorly|moderately|moderate|well)(\\s+(to|and)\\s+(poorly|moderately|moderate|well))?(\\s+|-)differentiated", re.IGNORECASE)
+diff_anywhere_rx = re.compile("(poorly|moderately|moderate|well)(\\s+(to|and)\\s+(poorly|moderately|moderate|well))?(\\s+|-)differentiated", re.IGNORECASE)
+# Words in groups 1 and 4
+word_grade_rx = re.compile("^(low|intermediate|moderate|high)(\\s+(to|and)\\s+(low|intermediate|moderate|high))?", re.IGNORECASE);
 # Numbers are in groups 6 and 9
-overall_grade_rx = re.compile("(overall\\s+grade|total\\s+score|nottingham\\s+histologic\\s+(grade|score|score-grade))\\s*(:)?\\s*(grade|g|score)?\\s*((\\d+|I+[XV]?|VI*|%s)+\\s*((/|of)\\s*(\\d+|III|IV|IX|three|four|nine))?)"%num_str, re.IGNORECASE)
+# Comparator is in group 8
+overall_grade_rx = re.compile("(overall\\s+grade|total\\s+score|nottingham\\s+histologic\\s+(grade|score|score-grade))\\s*-?\\s*(:)?\\s*(grade|g|score)?\\s*-?\\s*((\\d+|I+[XV]?|VI*|%s)+\\s*((/|of|out of|-|to)\\s*(\\d+|III|IV|IX|three|four|nine))?)"%num_str, re.IGNORECASE)
 form_grade_rx = re.compile("_*x_*\\s*grade\\s*(\\d+|I+V?|one|two|three|four)", re.IGNORECASE)
 
-first_end_tag_rx = re.compile("Histologic grade:.*?</\\w+>", re.IGNORECASE|re.DOTALL)
-
-'''
-For testing: prints all the subgroups in a match
-'''
-def print_groups(match):
-    print("Whole match: ", match.group())
-    i = 0
-    for group in match.groups():
-        i += 1
-        print(i, ":", group)
-
-def classify_record(patient):
-    gradeNumber = 0
+def classify_record(rec, use_diff):
+    # Try multiple header variations
     
-    # There may be more than one record
-    histology_headers = hist_title_rx.finditer(patient)
-
-    grades = []
-    start_indices = []
-    section_count = 0
-    header_count = 0
-
-    # Find the locations of "Histology Grade:"
-    for header_match in histology_headers:
-        header_count += 1
-        start_indices.append(header_match.start())
-
-    section_count = len(start_indices)
-
-    for i in range(0,section_count):
-        stop_index = len(patient)
-        if i < section_count - 1:
-            stop_index = start_indices[i+1]
-        section = patient[start_indices[i]:stop_index]
-
-        # Find numerical grade numbers immidiately to the right of "Histology Grade:"
-        number_found = number_grade_rx.search(section)
-        if number_found:
-            grades.append(extract_grade(number_found, 6, 9))
-
-        # Search for other indicators in the same line
-        else:
-            differentiation_found = differentiation_rx.search(section)
-            if differentiation_found:
-                grades.append(extract_word_grade(differentiation_found, "diff"))
-
-            else:
-                word_grade_found = word_grade_rx.search(section)
-                if word_grade_found:
-                    grades.append(extract_word_grade(word_grade_found, "grade"))
-
-                else:
-                    # Look for the overall grade farther along in the section
-                    # Only include text before the next end tag </something>
-                    section = first_end_tag_rx.search(section).group()
-
-                    overall_grade_found = overall_grade_rx.search(section)
-                    if overall_grade_found:
-                        grades.append(extract_grade(overall_grade_found, 6, 9))
-                    else:
-                        form_grade_found = form_grade_rx.search(section)
-                        if form_grade_found:
-                            grades.append(extract_grade(form_grade_found, 1, None))
-
-
+    # Histologic Grade:
+    grades = header_trial(rec, "histologic\\s+(grade|score)\\s*:\\s*")
     if len(grades) > 0:
         return grades
-
-    # No histology headers were found
-    if header_count == 0:
-        return [0]
-
+    
+    # Histologic Grade: (Nottingham histologic score)
+    # Histologic Grade: Nottingham:
+    grades = header_trial(rec, "histologic\\s+grade\\s*:?\\s*\(?nottingham\\s*(histologic)?\\s*(grade|score)?\)?\\s*:?\\s*")
+    if len(grades) > 0:
+        return grades
+    
+    # Histologic Grade: Bloom-richardson score
+    grades = header_trial(rec, "histologic\\s+grade\\s*:\\s*bloom-richardson\\s+score\\s*")
+    if len(grades) > 0:
+        return grades
+    
+    # Histologic Grade (MBR):
+    # Histologic Grade (if applicable):
+    grades = header_trial(rec, "histologic\\s+grade\\s*\((MBR|if\\s+applicable)\)\\s*:?\\s*")
+    if len(grades) > 0:
+        return grades
+    
+    # Histologic grade
+    grades = header_trial(rec, "histologic\\s+grade\\s*")
+    if len(grades) > 0:
+        return grades
+    
+    # Nottingham Histologic Grade:
+    grades = header_trial(rec, "\(?nottingham\\s+(histologic)?\\s*(grade|score)\)?\\s*:?\\s*")
+    if len(grades) > 0:
+        return grades
+    
+    # Bloom-Richardson score
+    grades = header_trial(rec, "\(?\\s*bloom-richardson\\s*(score)?\\s*\)?\\s*:?\\s*")
+    if len(grades) > 0:
+        return grades
+    
+    # Overall grade:
+    grades = header_trial(rec, "overall\\s+grade\\s*:\\s*")
+    if len(grades) > 0:
+        return grades
+    
+    # Nuclear grade:
+    grades = header_trial(rec, "nuclear\\s+grade\\s*:(\\s*nuclear\\s+grade)?\\s*")
+    if len(grades) > 0:
+        return grades
+    
+    # low/intermediate/high nuclear grade search
+    grades = nuclear_trial(rec)
+    if len(grades) > 0:
+        return grades
+    
+    # low/intermediate/high grade search
+    grades = grade_trial(rec)
+    if len(grades) > 0:
+        return grades
+    
+    if use_diff > 0:
+        # Search for differentiation strings
+        if use_diff == 1:
+            grades = diff_trial1(rec)
+            if len(grades) > 0:
+                return grades
+        elif use_diff == 2:
+            grades = diff_trial2(rec)
+            if len(grades) > 0:
+                return grades
+    
     return [0]
 
+def header_trial(rec, regex):
+    # Find sections with the given header
+    histology_headers = re.finditer(regex, rec, re.IGNORECASE)
+    starts = []
+    ends = []
+    # Headers may match regex but not be identical. Store variations
+    headers = []
+    count = 0
+    for header_match in histology_headers:
+        count += 1
+        starts.append(header_match.start())
+        headers.append(header_match.group())
+        if count > 1:
+            ends.append(header_match.start())
+    if count > 0:
+        ends.append(len(rec))
+    
+    # Attempt to find one grade per section
+    grades = []
+    for i in range(0, len(starts)):
+        section = rec[starts[i] + len(headers[i]):ends[i]]
+        grade = classify_section(section)
+        if grade > 0:
+            grades.append(grade)
+            
+    if len(grades) > 0:
+        return grades
+    elif count > 0:
+        return[0]
+    else:
+        return []
+    
+def diff_trial1(rec):
+    diff_matches = diff_anywhere_rx.finditer(rec)
+    undiff_matches = re.finditer("undifferentiated", rec, re.IGNORECASE)
+    grades = []
+    
+    for match in diff_matches:
+        grade = extract_word_grade(match, 1, 4)
+        
+        grades.append(grade)
+    if len(grades) > 1:
+        return [max(grades)]
+    elif len(grades) == 1 and grades[0] == 3:
+        return[]
+    
+    # A tumor can't be both differentiated and un-differentiated
+    else:
+        for match in undiff_matches:
+            grades.append(4)
+
+    return grades
+
+def diff_trial2(rec):
+    diff_matches = diff_anywhere_rx.finditer(rec)
+    undiff_matches = re.finditer("undifferentiated", rec, re.IGNORECASE)
+    grades = []
+    
+    for match in diff_matches:
+        grade = extract_word_grade(match, 1, 4)
+        if grade != 3:
+            grades.append(grade)
+    
+    # A tumor can't be both differentiated and un-differentiated
+    if len(grades) == 0:
+        for match in undiff_matches:
+            grades.append(4)
+
+    return grades
+
+def nuclear_trial(rec):
+    matches = re.finditer("(low|intermediate|moderate|high)(\\s*to\\s+(low|intermediate|moderate|high))?\\s+nuclear\\s+grade", rec)
+    grades = []
+    
+    for match in matches:
+        grade = extract_word_grade(match, 1, 3)
+        grades.append(grade)
+    return grades
+
+def grade_trial(rec):
+    matches = re.finditer("(low|intermediate|moderate|high)(\\s*to\\s+(low|intermediate|moderate|high))?\\s+grade", rec)
+    grades = []
+    
+    for match in matches:
+        grade = extract_word_grade(match, 1, 3)
+        grades.append(grade)
+    return grades
+
+def classify_section(section):
+    # Special Case for nottingham a+b+c=y
+    sum_found = re.search("\\d\\s*\+\\s*\\d\\s*\+\\s*\\d\\s*=\\s*(\\d)", section)
+    if sum_found:
+        return extract_number_grade(sum_found, 1, None, None)
+
+    # Find differentiation at the beginning of the section
+    differentiation_found = differentiation_rx.search(section)
+    if differentiation_found:
+        return extract_word_grade(differentiation_found, 1, 4)
+    
+    # Low/medium/high grade at section beginning
+    word_grade_found = word_grade_rx.search(section)
+    if word_grade_found:
+        return extract_word_grade(word_grade_found, 1, 4)
+    
+    # Find numerical grade at the beginning of the section
+    number_found = number_grade_rx.search(section)
+    if number_found:
+        return extract_number_grade(number_found, 4, 7, 6)
+
+
+    # Look for the overall grade farther along in the section
+    overall_grade_found = overall_grade_rx.search(section)
+    if overall_grade_found:
+        return extract_number_grade(overall_grade_found, 6, 9, 8)
+
+    # Look for grade in form format: Overall Grade: __x__
+    form_grade_found = form_grade_rx.search(section)
+    if form_grade_found:
+        return extract_number_grade(form_grade_found, 1, None, None)
+
+    return 0
+
+'''
+Methods for determining integer grade from a regex match or string
+'''
+
 # Returns a grade number for matches of the form x (of y), and its variations
-def extract_grade(match, first_num_location, second_num_location):
+def extract_number_grade(match, first_num_location, second_num_location, comparator_loc):
     num_1_str = match.group(first_num_location).lower()
     
-    first_num = extract_number(num_1_str)
+    first_num = parse_number(num_1_str)
     
-    # contains a maximum number (x of x)
+    # contains a maximum number (x / x) or (x to x)
     if second_num_location != None:
         num_2_str = match.group(second_num_location)
         if num_2_str != None:
             num_2_str = num_2_str.lower()
-            second_num = extract_number(num_2_str)
+            second_num = parse_number(num_2_str)
+            
+            # Special case: pair of numbers is a range
+            if comparator_loc != None:
+                comparator = match.group(comparator_loc)
+                if comparator == "to" or comparator == "-":
+                    num = max(first_num, second_num)
+                    if num > 4:
+                        num = convert_from_nottingham(num)
+                    return num
+            if second_num not in [3, 4, 9]:
+                num = max(first_num, second_num)
+                if num > 4:
+                    num = convert_from_nottingham(num)
+                return num
+            
             if second_num == 9:
                 first_num = convert_from_nottingham(first_num)
+        elif first_num > 4:
+            first_num = convert_from_nottingham(first_num)
+            
+        
+                
+            
     # only contains one number (grade x)
     else:
         if first_num > 3:
-            first_num = convert_from_nottingham(first_num)
+            first_num = convert_from_nottingham(first_num) 
 
     return first_num
 
-def extract_number(string):
+def parse_number(string):
     if string == '1' or string == "i" or string == "one":
         number = 1
     elif string == '2' or string == "ii" or string == "two":
@@ -167,21 +302,17 @@ def convert_from_nottingham(nottingham_num):
     else:
         return 2
 
-'''
-1: low/ well differentiated
-2: intermediate/ moderately differentiated
-3: high/ poorly differentiated
-'''
-def extract_word_grade(match, word_type):
-    if word_type == "diff":
-        groups = (2, 5)
-    elif word_type == "grade":
-        groups = (1, 4)
-    
-    grade_word = match.group(groups[0])
+def extract_word_grade(match, loc1, loc2):
+    '''
+    1: low/ well differentiated
+    2: intermediate/ moderately differentiated
+    3: high/ poorly differentiated
+    '''
+
+    grade_word = match.group(loc1)
 
     # for "poor to moderately" or "moderately to well"
-    alternate_word = match.group(groups[1])
+    alternate_word = match.group(loc2)
     score = diff_to_num(grade_word)
 
     if alternate_word != None:
@@ -205,31 +336,58 @@ Testing
 '''
 if __name__ == "__main__":
     # Three lines so that local modules will be recognized
-    # workaround for spyder.
+    # workaround for my spyder.
     import sys
     import os
     sys.path.append(os.path.abspath("."))
     # For testing
     import patient_splitter
-    import annotation_matcher
-    import record
     
+    corrections = {'PAT7':1, 'PAT14':2, 'REC86':1, 'PAT157':1, 'REC720':3, 'REC191':1, 'REC798':3}
+    # Pat67 is has a typo Histologic (Nottingham) = 5 overall = 6 (3 + 2 + 1)
+    # REC191 says "low nuclear grade"
+    # REC665 chooses the lower of moderate to poorly
+    # REC798 "Poorly Differentiated"
+    examined = 'REC'
     
-    records = patient_splitter.load_records("../data")
-    errors = []
-    # Misclassified in Annotations
-    ignore = ['PAT7', 'PAT14', 'REC15', 'REC74', 'REC86', 'PAT157', 'REC720']
-    for record_obj in records:
-        gold_string = annotation_matcher.search_annotation(record_obj.annotation, "Grade Category")
-        number_found = re.search("\d", gold_string)
-        if number_found:
-            gold = int(number_found.group())
-        else:
-            gold = 0
-        grades = classify_record(record_obj.text)
-        
-        if gold not in grades and grades[0] != 0 and record_obj.rid not in ignore:
-            print(record_obj.rid, grades, gold_string)
-            
-        if len(grades) > 1:
-            print(record_obj.rid, grades, gold_string)
+    records = patient_splitter.load_records("../data/Reports")
+    g_count = 0
+    unclassified = []
+    correct_count = 0
+    overclassified = 0
+    for rec in records:
+        if (rec.rid == examined):
+            print(rec.rid)
+        gold = rec.gold
+        if rec.rid in corrections:
+            gold = [corrections.get(rec.rid)]
+            print(rec.rid, "Old:", rec.gold, "New", gold)
+        grades = classify_record(rec.text, 2)
+        if grades[0] != 0:
+            if grades != gold:
+                if len(gold):
+                    all_same = True
+                    for g in grades:
+                        for d in gold:
+                            if d != g:
+                                all_same = False
+                                break
+                        if not all_same:
+                            print(rec.rid)
+                            print("Assigned", grades, "Gold", gold)
+                            print("PROOF",search_annotation(rec.annotation, "Histologic Grade Text"))
+                            break
+                else:
+                   # print(rec.rid)
+                    #print("Assigned", grades, "Gold", rec.gold)
+                    overclassified += 1
+            g_count += 1
+            if len(gold) > 0 and grades[0] in gold:
+                correct_count += 1
+        elif len(gold) > 0:
+            unclassified.append(rec)
+        if rec.rid == examined:
+            print("<<<<<" + rec.text + ">>>>>")
+            break
+    print("Correct", correct_count, "Over", overclassified, "Total", g_count, "Unclassified", len(unclassified))
+    print((correct_count + 0.0)/g_count)
