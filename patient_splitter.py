@@ -21,7 +21,7 @@ def get_file_list(dir, test):
         dir = re.sub(r"\\|/", re.escape(os.sep), dir)
     else:
         dir = re.sub(r"\\|/", os.sep, dir)
-    dir = dir.strip(os.sep)
+    dir = dir.rstrip(os.sep)
     if not test:
         return [os.sep.join((dir, f)) for f in os.listdir(dir) if f.endswith("train.txt")]
     else:
