@@ -11,20 +11,24 @@ Update config.py to contain the location of your MetaMap Lite directory, then ru
 
 Windows (assumes the default Python is Python 3):
 ```
-run.cmd data_dir error_file
+run.cmd data_dir print-errors no-metamap full-results
 ```
 Unix:
 ```bash
-run.sh data_dir error_file
+run.sh data_dir print-errors no-metamap full-results
 ```
 Manually:
 ```bash
-python(3) main.py data_dir error_file
+python(3) main.py data_dir print-errors no-metamap full-results
 ```
 
 data_dir is the directory containing the data files.
 
-error_file is optional. If it is present, error data will be printed to a file with that name.
+print-errors is an optional string. If it is present, error data will be printed to an "error_analysis.txt" file.
+
+no-metamap is an optional string. If it is present, metamap will not be used.
+
+full-results is an optional string. If it is present, the program will print results for each module as well as combined results.
 
 Dependencies
 -----

@@ -16,19 +16,30 @@ Contains the top-level code for classifying a records's histological grade.
 Makes calls to other more specific programs; manages and outputs what they return.
 
 
-USAGE: python(3) main.py data_dir error_file
+USAGE: python(3) main.py data_dir print-errors no-metamap full-results
 
 data_dir is the directory containing the data files.
-error_file is optional. If it is present, error data will
-    be printed to a file with that name.
+print-errors is an optional string. If it is present, error data will
+    be printed to an "error_analysis.txt" file.
+no-metamap is an optional string. If it is present, metamap will not
+    be used.
+full-results is an optional string. If it is present, the program will
+    print results for each module as well as combined results.
 '''
 # Corrections for incorrectly-annotated records
 corrections = {'PAT7':[1], 'PAT14':[2], 'REC86':[1], 'PAT157':[1], 'REC720':[3], 'REC191':[1], 'REC798':[3]}
 
 data_dir = sys.argv[1]
-report_errors = len(sys.argv) == 3
+report_errors = "print-errors" in sys.argv
 if report_errors:
-    ea = open(sys.argv[2], 'w')
+    ea = open("error_analysis.txt", 'w')
+use_metamap = "no-metamap" not in sys.argv
+if use_metamap:
+    from config import METAMAP_DIR
+    if not os.path.exists(METAMAP_DIR):
+        print("MetaMap Lite installation not found. To use MetaMap Lite, install it and edit config.py. Running without MetaMap Lite.", file=sys.stderr)
+        use_metamap = False
+full_results = "full-results" in sys.argv
 
 # call patient_splitter to get a list of patient records
 train_records = patient_splitter.load_records(data_dir)
@@ -52,9 +63,20 @@ for record in train_records:
             #     positive_lines.append(line)
             # else:
             #     negative_lines.append(line)
+        if use_metamap:
+            umls = record_module.get_UMLS_tags(grade)
+            for term in umls:
+                grade += " " + term.tag
+                for concept in term.concepts:
+                    grade += " " + concept.concept
         positive_lines.append(grade) # add metamap stuff here
     for line in record.text.split("\n"):
-        # print(record_module.get_UMLS_tags(line))
+        if use_metamap:
+            umls = record_module.get_UMLS_tags(line)
+            for term in umls:
+                line += " " + term.tag
+                for concept in term.concepts:
+                    line += " " + concept.concept
         if grade not in line:
             negative_lines.append(line)
 # randomly cull the negative examples so that we have a 50:50 positive/negative split of training data
@@ -200,91 +222,92 @@ print()
 print("Specific accuracy:" + str((matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3] + matrix[4][4]) / seen))
 print("Specific accuracy excluding negatives:" + str((matrix[1][1] + matrix[2][2] + matrix[3][3] + matrix[4][4]) / should_have_class[0]))
 
-# print rule-based results
-binary_true_positive = rb_matrix[1][1] + rb_matrix[1][2] + rb_matrix[1][3] + rb_matrix[1][4] + rb_matrix[2][1] + rb_matrix[2][2] + rb_matrix[2][3] + rb_matrix[2][4]
-binary_true_positive += rb_matrix[3][1] + rb_matrix[3][2] + rb_matrix[3][3] + rb_matrix[3][4] + rb_matrix[4][1] + rb_matrix[4][2] + rb_matrix[4][3] + rb_matrix[4][4]
-binary_false_positive = rb_matrix[1][0] + rb_matrix[2][0] + rb_matrix[3][0] + rb_matrix[4][0]
-binary_true_negative = rb_matrix[0][0]
-binary_false_negative = rb_matrix[0][1] + rb_matrix[0][2] + rb_matrix[0][3] + rb_matrix[0][4]
+if full_results:
+    # print rule-based results
+    binary_true_positive = rb_matrix[1][1] + rb_matrix[1][2] + rb_matrix[1][3] + rb_matrix[1][4] + rb_matrix[2][1] + rb_matrix[2][2] + rb_matrix[2][3] + rb_matrix[2][4]
+    binary_true_positive += rb_matrix[3][1] + rb_matrix[3][2] + rb_matrix[3][3] + rb_matrix[3][4] + rb_matrix[4][1] + rb_matrix[4][2] + rb_matrix[4][3] + rb_matrix[4][4]
+    binary_false_positive = rb_matrix[1][0] + rb_matrix[2][0] + rb_matrix[3][0] + rb_matrix[4][0]
+    binary_true_negative = rb_matrix[0][0]
+    binary_false_negative = rb_matrix[0][1] + rb_matrix[0][2] + rb_matrix[0][3] + rb_matrix[0][4]
 
-print()
-print()
-print("Rule-based Only")
-print("----------------")
-print("Records processed: " + str(seen))
-print("Records which should not have a grade given:" + str(seen - should_have_class[0]))
-print("Records which should have a grade given: "+ str(should_have_class[0]))
-print("Records not given a grade: " + str(binary_true_negative + binary_false_negative))
-print("Records given a grade: " + str(binary_false_positive + binary_true_positive))
-print("Binary accuracy: " + str((binary_true_positive + binary_true_negative) / seen))
-binary_precision = binary_true_positive / (binary_true_positive + binary_false_positive)
-binary_recall = binary_true_positive / should_have_class[0]
-print("Binary precision: " + str(binary_precision))
-print("Binary recall: " + str(binary_recall))
-print("Binary F1-Score: " + str(((binary_precision * binary_recall) / (binary_precision + binary_recall)) * 2))
-print("Binary specificity: " + str(binary_true_negative / (binary_true_negative + binary_false_positive)))
-try:
-    print("Binary NPV: " + str(binary_true_negative / (binary_true_negative + binary_false_negative)))
-except ZeroDivisionError as e:
-    print("Binary NPV: N/A (division by zero): " + str(binary_true_negative) + " / " + str(binary_true_negative + binary_false_negative))
-print()
-print("Confusion matrix")
-print("Assigned grade on the left, gold grade along the top")
-print("0 = no grade")
-print()
-print("  | 0\t1\t2\t3\t4")
-print("--+-----------------------------------")
-for i in range(len(rb_matrix)):
-    print(str(i) + " | ", end='')
-    for j in range(len(rb_matrix[i])):
-        print(str(rb_matrix[i][j]) + "\t", end='')
     print()
-print()
-print("Specific accuracy:" + str((rb_matrix[0][0] + rb_matrix[1][1] + rb_matrix[2][2] + rb_matrix[3][3] + rb_matrix[4][4]) / seen))
-print("Specific accuracy excluding negatives:" + str((rb_matrix[1][1] + rb_matrix[2][2] + rb_matrix[3][3] + rb_matrix[4][4]) / should_have_class[0]))
-
-# print machine learning results
-binary_true_positive = ml_matrix[1][1] + ml_matrix[1][2] + ml_matrix[1][3] + ml_matrix[1][4] + ml_matrix[2][1] + ml_matrix[2][2] + ml_matrix[2][3] + ml_matrix[2][4]
-binary_true_positive += ml_matrix[3][1] + ml_matrix[3][2] + ml_matrix[3][3] + ml_matrix[3][4] + ml_matrix[4][1] + ml_matrix[4][2] + ml_matrix[4][3] + ml_matrix[4][4]
-binary_false_positive = ml_matrix[1][0] + ml_matrix[2][0] + ml_matrix[3][0] + ml_matrix[4][0]
-binary_true_negative = ml_matrix[0][0]
-binary_false_negative = ml_matrix[0][1] + ml_matrix[0][2] + ml_matrix[0][3] + ml_matrix[0][4]
-
-print()
-print()
-print("Machine Learning Only")
-print("----------------------")
-print("Records processed: " + str(seen))
-print("Records which should not have a grade given:" + str(seen - should_have_class[0]))
-print("Records which should have a grade given: "+ str(should_have_class[0]))
-print("Records not given a grade: " + str(binary_true_negative + binary_false_negative))
-print("Records given a grade: " + str(binary_false_positive + binary_true_positive))
-print("Binary accuracy: " + str((binary_true_positive + binary_true_negative) / seen))
-binary_precision = binary_true_positive / (binary_true_positive + binary_false_positive)
-binary_recall = binary_true_positive / should_have_class[0]
-print("Binary precision: " + str(binary_precision))
-print("Binary recall: " + str(binary_recall))
-print("Binary F1-Score: " + str(((binary_precision * binary_recall) / (binary_precision + binary_recall)) * 2))
-print("Binary specificity: " + str(binary_true_negative / (binary_true_negative + binary_false_positive)))
-try:
-    print("Binary NPV: " + str(binary_true_negative / (binary_true_negative + binary_false_negative)))
-except ZeroDivisionError as e:
-    print("Binary NPV: N/A (division by zero): " + str(binary_true_negative) + " / " + str(binary_true_negative + binary_false_negative))
-print()
-print("Confusion matrix")
-print("Assigned grade on the left, gold grade along the top")
-print("0 = no grade")
-print()
-print("  | 0\t1\t2\t3\t4")
-print("--+-----------------------------------")
-for i in range(len(ml_matrix)):
-    print(str(i) + " | ", end='')
-    for j in range(len(ml_matrix[i])):
-        print(str(ml_matrix[i][j]) + "\t", end='')
     print()
-print()
-print("Specific accuracy:" + str((ml_matrix[0][0] + ml_matrix[1][1] + ml_matrix[2][2] + ml_matrix[3][3] + ml_matrix[4][4]) / seen))
-print("Specific accuracy excluding negatives:" + str((ml_matrix[1][1] + ml_matrix[2][2] + ml_matrix[3][3] + ml_matrix[4][4]) / should_have_class[0]))
+    print("Rule-based Only")
+    print("----------------")
+    print("Records processed: " + str(seen))
+    print("Records which should not have a grade given:" + str(seen - should_have_class[0]))
+    print("Records which should have a grade given: "+ str(should_have_class[0]))
+    print("Records not given a grade: " + str(binary_true_negative + binary_false_negative))
+    print("Records given a grade: " + str(binary_false_positive + binary_true_positive))
+    print("Binary accuracy: " + str((binary_true_positive + binary_true_negative) / seen))
+    binary_precision = binary_true_positive / (binary_true_positive + binary_false_positive)
+    binary_recall = binary_true_positive / should_have_class[0]
+    print("Binary precision: " + str(binary_precision))
+    print("Binary recall: " + str(binary_recall))
+    print("Binary F1-Score: " + str(((binary_precision * binary_recall) / (binary_precision + binary_recall)) * 2))
+    print("Binary specificity: " + str(binary_true_negative / (binary_true_negative + binary_false_positive)))
+    try:
+        print("Binary NPV: " + str(binary_true_negative / (binary_true_negative + binary_false_negative)))
+    except ZeroDivisionError as e:
+        print("Binary NPV: N/A (division by zero): " + str(binary_true_negative) + " / " + str(binary_true_negative + binary_false_negative))
+    print()
+    print("Confusion matrix")
+    print("Assigned grade on the left, gold grade along the top")
+    print("0 = no grade")
+    print()
+    print("  | 0\t1\t2\t3\t4")
+    print("--+-----------------------------------")
+    for i in range(len(rb_matrix)):
+        print(str(i) + " | ", end='')
+        for j in range(len(rb_matrix[i])):
+            print(str(rb_matrix[i][j]) + "\t", end='')
+        print()
+    print()
+    print("Specific accuracy:" + str((rb_matrix[0][0] + rb_matrix[1][1] + rb_matrix[2][2] + rb_matrix[3][3] + rb_matrix[4][4]) / seen))
+    print("Specific accuracy excluding negatives:" + str((rb_matrix[1][1] + rb_matrix[2][2] + rb_matrix[3][3] + rb_matrix[4][4]) / should_have_class[0]))
+
+    # print machine learning results
+    binary_true_positive = ml_matrix[1][1] + ml_matrix[1][2] + ml_matrix[1][3] + ml_matrix[1][4] + ml_matrix[2][1] + ml_matrix[2][2] + ml_matrix[2][3] + ml_matrix[2][4]
+    binary_true_positive += ml_matrix[3][1] + ml_matrix[3][2] + ml_matrix[3][3] + ml_matrix[3][4] + ml_matrix[4][1] + ml_matrix[4][2] + ml_matrix[4][3] + ml_matrix[4][4]
+    binary_false_positive = ml_matrix[1][0] + ml_matrix[2][0] + ml_matrix[3][0] + ml_matrix[4][0]
+    binary_true_negative = ml_matrix[0][0]
+    binary_false_negative = ml_matrix[0][1] + ml_matrix[0][2] + ml_matrix[0][3] + ml_matrix[0][4]
+
+    print()
+    print()
+    print("Machine Learning Only")
+    print("----------------------")
+    print("Records processed: " + str(seen))
+    print("Records which should not have a grade given:" + str(seen - should_have_class[0]))
+    print("Records which should have a grade given: "+ str(should_have_class[0]))
+    print("Records not given a grade: " + str(binary_true_negative + binary_false_negative))
+    print("Records given a grade: " + str(binary_false_positive + binary_true_positive))
+    print("Binary accuracy: " + str((binary_true_positive + binary_true_negative) / seen))
+    binary_precision = binary_true_positive / (binary_true_positive + binary_false_positive)
+    binary_recall = binary_true_positive / should_have_class[0]
+    print("Binary precision: " + str(binary_precision))
+    print("Binary recall: " + str(binary_recall))
+    print("Binary F1-Score: " + str(((binary_precision * binary_recall) / (binary_precision + binary_recall)) * 2))
+    print("Binary specificity: " + str(binary_true_negative / (binary_true_negative + binary_false_positive)))
+    try:
+        print("Binary NPV: " + str(binary_true_negative / (binary_true_negative + binary_false_negative)))
+    except ZeroDivisionError as e:
+        print("Binary NPV: N/A (division by zero): " + str(binary_true_negative) + " / " + str(binary_true_negative + binary_false_negative))
+    print()
+    print("Confusion matrix")
+    print("Assigned grade on the left, gold grade along the top")
+    print("0 = no grade")
+    print()
+    print("  | 0\t1\t2\t3\t4")
+    print("--+-----------------------------------")
+    for i in range(len(ml_matrix)):
+        print(str(i) + " | ", end='')
+        for j in range(len(ml_matrix[i])):
+            print(str(ml_matrix[i][j]) + "\t", end='')
+        print()
+    print()
+    print("Specific accuracy:" + str((ml_matrix[0][0] + ml_matrix[1][1] + ml_matrix[2][2] + ml_matrix[3][3] + ml_matrix[4][4]) / seen))
+    print("Specific accuracy excluding negatives:" + str((ml_matrix[1][1] + ml_matrix[2][2] + ml_matrix[3][3] + ml_matrix[4][4]) / should_have_class[0]))
 
 # print information for doing error analysis here
 if report_errors:
