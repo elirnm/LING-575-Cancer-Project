@@ -72,11 +72,14 @@ trained_objects = ml_classifier.train(training_lines)
 # rb_* variables track results of rule-based classifier only
 # ml_* variables track results of machine learning classifier only
 # generic variables track results of system as a whole
-# list variable are of form [count for records, count for tumors]
-seen = 0
-should_have_class = [0, 0]
-classified, rb_classified, ml_classified = [0, 0], [0, 0], [0, 0]
-correct, rb_correct, ml_correct = 0, 0, 0
+matrix = [[0 for _ in range(5)] for _ in range(5)]
+rb_matrix = [[0 for _ in range(5)] for _ in range(5)]
+ml_matrix = [[0 for _ in range(5)] for _ in range(5)]
+seen = 0 # records processed
+should_have_class = [0, 0] # records that should have nonzero class
+classified, rb_classified, ml_classified = 0, 0, 0 # records that were given nonzero class
+correct, rb_correct, ml_correct = 0, 0, 0 # records given correct grade -- including correctly giving zero class
+positive_correct, rb_positive_correct, ml_positive_correct = 0, 0, 0 # records given correct grade -- excluding nonzero class
 rb_spec_correct, ml_spec_correct = 0, 0
 rb_full_correct, ml_full_correct = 0, 0
 # initialize variables for doing error analysis here
@@ -98,41 +101,52 @@ for record in train_records:
         if ml_grade[i] == "0":
             del ml_lines[i]
     ml_grade = [int(x) for x in ml_grade if x != "0"]
-    # figure out how to extract the specific grade from the lines
+    # extract the specific grade from the lines
+    ml_grade = [rule_based_classifier.classify_string(x) for x in ml_lines]
+    # get best combined grade
+    combo_grades = rb_grade + ml_grade
+    counts = {0:0, 1:0, 2:0, 3:0, 4:0}
+    rb_counts = {0:0, 1:0, 2:0, 3:0, 4:0}
+    ml_counts = {0:0, 1:0, 2:0, 3:0, 4:0}
+    for grade in combo_grades:
+        counts[grade] += 1
+    for grade in rb_grade:
+        rb_counts[grade] += 1
+    for grade in ml_grade:
+        ml_counts[grade] += 1
+    counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+    rb_counts = sorted(rb_counts.items(), key=lambda x: x[1], reverse=True)
+    ml_counts = sorted(ml_counts.items(), key=lambda x: x[1], reverse=True)
+    if counts == []:
+        best_grade = 0
+    else:
+        if counts[0][1] == counts[1][1]:
+            best_grade = max(counts[0][0], counts[1][0])
+        else:
+            best_grade = counts[0][0]
+    if rb_counts == []:
+        rb_best_grade = 0
+    else:
+        if rb_counts[0][1] == rb_counts[1][1]:
+            rb_best_grade = max(rb_counts[0][0], rb_counts[1][0])
+        else:
+            rb_best_grade = rb_counts[0][0]
+    if ml_counts == []:
+        ml_best_grade = 0
+    else:
+        if ml_counts[0][1] == ml_counts[1][1]:
+            ml_best_grade = max(ml_counts[0][0], ml_counts[1][0])
+        else:
+            ml_best_grade = ml_counts[0][0]
+    best_gold = max(gold) if gold != [] else 0
+    # count for accuracy
     seen += 1
+    matrix[best_grade][best_gold] += 1
+    rb_matrix[rb_best_grade][best_gold] += 1
+    ml_matrix[ml_best_grade][best_gold] += 1
     if gold != []:
         should_have_class[0] += 1
         should_have_class[1] += len(gold)
-    if rb_grade != [0]:
-        classified[0] += 1
-        classified[1] += len(rb_grade)
-        rb_classified[0] += 1
-        rb_classified[1] += len(rb_grade)
-    if ml_grade != []:
-        ml_classified[0] += 1
-        ml_classified[1] += len(ml_grade)
-    if rb_grade == gold:
-        rb_full_correct += 1
-    if len(ml_grade) == len(gold) and ml_grade != []:
-        ml_full_correct += 1
-    for tumor_grade in rb_grade:
-        if tumor_grade in gold:
-            correct += 1
-            rb_correct += 1
-    for tumor_grade in ml_grade:
-        if tumor_grade in gold:
-            correct += 1
-            ml_correct += 1
-    for i in range(len(rb_grade)):
-        if i >= len(gold):
-            break
-        if rb_grade[i] == gold[i]:
-            rb_spec_correct += 1
-    for i in range(len(ml_grade)):
-        if i >= len(gold):
-            break
-        if ml_grade[i] == gold[i]:
-            ml_spec_correct += 1
 
     # update variables for doing error analysis here
     if report_errors:
@@ -148,18 +162,129 @@ for record in train_records:
             len_mismatches.append((rec_file + "/" + record.rid, len(pos_grades), len(gold)))
 
 # output accuracy data
-print(str(seen) + " records processed")
-print(str(should_have_class[1]) + " tumors in " + str(should_have_class[0]) + " records should be classified") 
-print(str(rb_classified[1]) + " tumors in " + str(rb_classified[0]) + " records classified -- rule-based")
-print(str(rb_correct) + " tumors correctly classified ignoring ordering (did the grade appear in the gold; it might not actually be correct for that tumor) -- rule-based")
-print(str(rb_full_correct) + " records classified fully correctly -- rule-based")
-print(str(rb_spec_correct) + " tumors classified with correct ordering (rough estimate) -- rule-based")
-# print("Accuracy on records classified = " + str(correct / classified))
-# print("Accuracy on records that should be classified = " + str(correct / should_have_class))
-print(str(ml_classified[1]) + " tumors in " + str(ml_classified[0]) + " records classified -- machine learning")
-print(str(ml_correct) + " tumors correctly classified ignoring ordering (did the grade appear in the gold; it might not actually be correct for that tumor) -- machine learning")
-print(str(ml_full_correct) + " records classified fully correctly -- machine learning")
-print(str(ml_spec_correct) + " tumors classified with correct ordering (rough estimate) -- machine learning")
+# print combined results
+binary_true_positive = matrix[1][1] + matrix[1][2] + matrix[1][3] + matrix[1][4] + matrix[2][1] + matrix[2][2] + matrix[2][3] + matrix[2][4]
+binary_true_positive += matrix[3][1] + matrix[3][2] + matrix[3][3] + matrix[3][4] + matrix[4][1] + matrix[4][2] + matrix[4][3] + matrix[4][4]
+binary_false_positive = matrix[1][0] + matrix[2][0] + matrix[3][0] + matrix[4][0]
+binary_true_negative = matrix[0][0]
+binary_false_negative = matrix[0][1] + matrix[0][2] + matrix[0][3] + matrix[0][4]
+
+print("Combined")
+print("---------")
+print("Records processed: " + str(seen))
+print("Records which should not have a grade given:" + str(seen - should_have_class[0]))
+print("Records which should have a grade given: "+ str(should_have_class[0]))
+print("Records not given a grade: " + str(binary_true_negative + binary_false_negative))
+print("Records given a grade: " + str(binary_false_positive + binary_true_positive))
+print("Binary accuracy: " + str((binary_true_positive + binary_true_negative) / seen))
+binary_precision = binary_true_positive / (binary_true_positive + binary_false_positive)
+binary_recall = binary_true_positive / should_have_class[0]
+print("Binary precision: " + str(binary_precision))
+print("Binary recall: " + str(binary_recall))
+print("Binary F1-Score: " + str(((binary_precision * binary_recall) / (binary_precision + binary_recall)) * 2))
+print("Binary specificity: " + str(binary_true_negative / (binary_true_negative + binary_false_positive)))
+print("Binary NPV: " + str(binary_true_negative / (binary_true_negative + binary_false_negative)))
+print()
+print("Confusion matrix")
+print("Assigned grade on the left, gold grade along the top")
+print("0 = no grade")
+print()
+print("  | 0\t1\t2\t3\t4")
+print("--+-----------------------------------")
+for i in range(len(matrix)):
+    print(str(i) + " | ", end='')
+    for j in range(len(matrix[i])):
+        print(str(matrix[i][j]) + "\t", end='')
+    print()
+print()
+print("Specific accuracy:" + str((matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3] + matrix[4][4]) / seen))
+print("Specific accuracy excluding negatives:" + str((matrix[1][1] + matrix[2][2] + matrix[3][3] + matrix[4][4]) / should_have_class[0]))
+
+# print rule-based results
+binary_true_positive = rb_matrix[1][1] + rb_matrix[1][2] + rb_matrix[1][3] + rb_matrix[1][4] + rb_matrix[2][1] + rb_matrix[2][2] + rb_matrix[2][3] + rb_matrix[2][4]
+binary_true_positive += rb_matrix[3][1] + rb_matrix[3][2] + rb_matrix[3][3] + rb_matrix[3][4] + rb_matrix[4][1] + rb_matrix[4][2] + rb_matrix[4][3] + rb_matrix[4][4]
+binary_false_positive = rb_matrix[1][0] + rb_matrix[2][0] + rb_matrix[3][0] + rb_matrix[4][0]
+binary_true_negative = rb_matrix[0][0]
+binary_false_negative = rb_matrix[0][1] + rb_matrix[0][2] + rb_matrix[0][3] + rb_matrix[0][4]
+
+print()
+print()
+print("Rule-based Only")
+print("----------------")
+print("Records processed: " + str(seen))
+print("Records which should not have a grade given:" + str(seen - should_have_class[0]))
+print("Records which should have a grade given: "+ str(should_have_class[0]))
+print("Records not given a grade: " + str(binary_true_negative + binary_false_negative))
+print("Records given a grade: " + str(binary_false_positive + binary_true_positive))
+print("Binary accuracy: " + str((binary_true_positive + binary_true_negative) / seen))
+binary_precision = binary_true_positive / (binary_true_positive + binary_false_positive)
+binary_recall = binary_true_positive / should_have_class[0]
+print("Binary precision: " + str(binary_precision))
+print("Binary recall: " + str(binary_recall))
+print("Binary F1-Score: " + str(((binary_precision * binary_recall) / (binary_precision + binary_recall)) * 2))
+print("Binary specificity: " + str(binary_true_negative / (binary_true_negative + binary_false_positive)))
+try:
+    print("Binary NPV: " + str(binary_true_negative / (binary_true_negative + binary_false_negative)))
+except ZeroDivisionError as e:
+    print("Binary NPV: N/A (division by zero): " + str(binary_true_negative) + " / " + str(binary_true_negative + binary_false_negative))
+print()
+print("Confusion matrix")
+print("Assigned grade on the left, gold grade along the top")
+print("0 = no grade")
+print()
+print("  | 0\t1\t2\t3\t4")
+print("--+-----------------------------------")
+for i in range(len(rb_matrix)):
+    print(str(i) + " | ", end='')
+    for j in range(len(rb_matrix[i])):
+        print(str(rb_matrix[i][j]) + "\t", end='')
+    print()
+print()
+print("Specific accuracy:" + str((rb_matrix[0][0] + rb_matrix[1][1] + rb_matrix[2][2] + rb_matrix[3][3] + rb_matrix[4][4]) / seen))
+print("Specific accuracy excluding negatives:" + str((rb_matrix[1][1] + rb_matrix[2][2] + rb_matrix[3][3] + rb_matrix[4][4]) / should_have_class[0]))
+
+# print machine learning results
+binary_true_positive = ml_matrix[1][1] + ml_matrix[1][2] + ml_matrix[1][3] + ml_matrix[1][4] + ml_matrix[2][1] + ml_matrix[2][2] + ml_matrix[2][3] + ml_matrix[2][4]
+binary_true_positive += ml_matrix[3][1] + ml_matrix[3][2] + ml_matrix[3][3] + ml_matrix[3][4] + ml_matrix[4][1] + ml_matrix[4][2] + ml_matrix[4][3] + ml_matrix[4][4]
+binary_false_positive = ml_matrix[1][0] + ml_matrix[2][0] + ml_matrix[3][0] + ml_matrix[4][0]
+binary_true_negative = ml_matrix[0][0]
+binary_false_negative = ml_matrix[0][1] + ml_matrix[0][2] + ml_matrix[0][3] + ml_matrix[0][4]
+
+print()
+print()
+print("Machine Learning Only")
+print("----------------------")
+print("Records processed: " + str(seen))
+print("Records which should not have a grade given:" + str(seen - should_have_class[0]))
+print("Records which should have a grade given: "+ str(should_have_class[0]))
+print("Records not given a grade: " + str(binary_true_negative + binary_false_negative))
+print("Records given a grade: " + str(binary_false_positive + binary_true_positive))
+print("Binary accuracy: " + str((binary_true_positive + binary_true_negative) / seen))
+binary_precision = binary_true_positive / (binary_true_positive + binary_false_positive)
+binary_recall = binary_true_positive / should_have_class[0]
+print("Binary precision: " + str(binary_precision))
+print("Binary recall: " + str(binary_recall))
+print("Binary F1-Score: " + str(((binary_precision * binary_recall) / (binary_precision + binary_recall)) * 2))
+print("Binary specificity: " + str(binary_true_negative / (binary_true_negative + binary_false_positive)))
+try:
+    print("Binary NPV: " + str(binary_true_negative / (binary_true_negative + binary_false_negative)))
+except ZeroDivisionError as e:
+    print("Binary NPV: N/A (division by zero): " + str(binary_true_negative) + " / " + str(binary_true_negative + binary_false_negative))
+print()
+print("Confusion matrix")
+print("Assigned grade on the left, gold grade along the top")
+print("0 = no grade")
+print()
+print("  | 0\t1\t2\t3\t4")
+print("--+-----------------------------------")
+for i in range(len(ml_matrix)):
+    print(str(i) + " | ", end='')
+    for j in range(len(ml_matrix[i])):
+        print(str(ml_matrix[i][j]) + "\t", end='')
+    print()
+print()
+print("Specific accuracy:" + str((ml_matrix[0][0] + ml_matrix[1][1] + ml_matrix[2][2] + ml_matrix[3][3] + ml_matrix[4][4]) / seen))
+print("Specific accuracy excluding negatives:" + str((ml_matrix[1][1] + ml_matrix[2][2] + ml_matrix[3][3] + ml_matrix[4][4]) / should_have_class[0]))
 
 # print information for doing error analysis here
 if report_errors:

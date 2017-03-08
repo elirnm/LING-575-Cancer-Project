@@ -1,6 +1,5 @@
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_selection import VarianceThreshold
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression # MaxEnt
 from sklearn.tree import DecisionTreeClassifier
