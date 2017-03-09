@@ -39,4 +39,4 @@ Dependencies
 
 * Python 3
 * [scikit-learn](http://scikit-learn.org/stable/index.html)
-* [MetaMap Lite (optional)](https://metamap.nlm.nih.gov/MetaMapLite.shtml)
+* [MetaMap Lite](https://metamap.nlm.nih.gov/MetaMapLite.shtml) (optional)
