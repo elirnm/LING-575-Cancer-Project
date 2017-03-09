@@ -55,12 +55,6 @@ for record in train_records:
     for grade in grade_text:
         if grade == "":
             continue
-        # for line in record.text.split("\n"):
-            # # add metamap stuff to the lines here before adding them to the positive/negative lists
-            # if grade in line:
-            #     positive_lines.append(line)
-            # else:
-            #     negative_lines.append(line)
         if use_metamap:
             umls = record_module.get_UMLS_tags(grade)
             for term in umls:
@@ -181,17 +175,14 @@ def classify(records_list):
             else:
                 ml_best_grade = ml_counts[0][0]
         best_gold = max(gold) if gold != [] else 0
+        # account for grade 9 being used for unknown grade in one annotation
+        if best_gold == 9:
+            best_gold = 0
         # count for accuracy
         seen += 1
-        try:
-            combo_matrix[best_grade][best_gold] += 1
-            rb_matrix[rb_best_grade][best_gold] += 1
-            ml_matrix[ml_best_grade][best_gold] += 1
-        except IndexError as e:
-            print("Bad annotation:", file=sys.stderr)
-            print("File: " + record.file, file=sys.stderr)
-            print("Record ID: " + str(record.rid), file=sys.stderr)
-            print("Grade: " + str(best_gold), file=sys.stderr)
+        combo_matrix[best_grade][best_gold] += 1
+        rb_matrix[rb_best_grade][best_gold] += 1
+        ml_matrix[ml_best_grade][best_gold] += 1
         if gold != []:
             should_have_class += 1
 

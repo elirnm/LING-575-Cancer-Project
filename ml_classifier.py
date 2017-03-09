@@ -29,7 +29,6 @@ def train(text):
     '''
     count_vect = CountVectorizer()
     selector = VarianceThreshold()
-    # selector = SelectKBest(chi2, k=10)
     labels = [x[1] for x in text]
     lines = [x[0] for x in text]
     train_counts = count_vect.fit_transform(lines)
