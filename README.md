@@ -26,7 +26,7 @@ data_dir is the directory containing the data files.
 
 print-errors is an optional string. If it is present, error data will be printed to an "error_analysis.txt" file.
 
-no-metamap is an optional string. If it is present, metamap will not be used.
+no-metamap is an optional string. If it is present, MetaMap Lite will not be used.
 
 full-results is an optional string. If it is present, the program will print results for each module as well as combined results.
 
@@ -34,5 +34,5 @@ Dependencies
 -----
 
 * Python 3
-* MetaMap Lite
 * scikit-learn
+* MetaMap Lite (optional)
