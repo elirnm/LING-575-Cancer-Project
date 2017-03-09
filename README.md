@@ -24,7 +24,7 @@ Manually:
 python(3) main.py data_dir print-errors no-metamap full-results
 ```
 
-data_dir is the directory containing the data files.
+data_dir is the directory containing the data files (the clinical records, not the annotations).
 
 print-errors is an optional string. If it is present, error data will be printed to an "error_analysis.txt" file.
 
