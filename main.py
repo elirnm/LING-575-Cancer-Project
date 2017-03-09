@@ -246,6 +246,7 @@ def print_results(matrix):
     print()
     print("Specific accuracy:" + str((matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3] + matrix[4][4]) / seen))
     print("Specific accuracy excluding negatives:" + str((matrix[1][1] + matrix[2][2] + matrix[3][3] + matrix[4][4]) / should_have_class))
+    print("Specific accuracy over records that we gave a grade: " + str((matrix[1][1] + matrix[2][2] + matrix[3][3] + matrix[4][4]) / (binary_true_positive + binary_false_positive)))
 
 def write_errors():
     '''Writes data for doing error analysis.'''
