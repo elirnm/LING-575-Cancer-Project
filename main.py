@@ -143,7 +143,6 @@ def classify(records_list):
         for i in range(len(ml_grade) - 1, -1, -1):
             if ml_grade[i] == "0":
                 del ml_lines[i]
-        ml_grade = [int(x) for x in ml_grade if x != "0"]
         # extract the specific grade from the lines
         ml_grade = [rule_based_classifier.classify_string(x) for x in ml_lines]
         # get best combined grade
